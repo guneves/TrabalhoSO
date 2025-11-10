@@ -1,4 +1,3 @@
-# src/processo.py
 import math
 from typing import Optional
 
@@ -48,17 +47,13 @@ class Processo:
             print(f"ERRO: Tentando calcular métricas para {self.id} que não terminou.")
             return
 
-        #TURNAROUND = TEMPO_DE_TÉRMINO - TEMPO_DE_CHEGADA !!!
         self.turnaround = self.tempo_termino - self.chegada
         
-        #TEMPO_DE_ESPERA = TURNAROUND - TEMPO_DE_EXECUÇÃO !!!
         self.tempo_espera = self.turnaround - self.execucao
         
-        #VERIFICA SE ATENDEU O DEADLINE
         self.deadline_ok = self.tempo_termino <= self.deadline
 
     def __repr__(self) -> str:
-        """Representação em string para facilitar."""
         return (f"Processo(id='{self.id}', "
                 f"chegada={self.chegada}, "
                 f"exec={self.execucao}, "
