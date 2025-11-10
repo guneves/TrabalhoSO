@@ -1,32 +1,20 @@
-# 1. Ambiente Virtual (VENV)
-# Ignora a pasta do ambiente virtual local
+
 .venv/
 venv/
 env/
 
-# 2. Python (Cache e Compilados)
-# Ignora pastas de cache e arquivos compilados
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# 3. Arquivos de IDE e SO
-# Ignora arquivos de configuração de editores e lixo do SO
 .vscode/
 .idea/
 .DS_Store
 *.swp
 *~
 
-# 4. Saídas do Simulador (ESSENCIAL)
-# Ignora todo o conteúdo da pasta /out/
-# Lembre-se de adicionar um arquivo .gitkeep vazio
-# dentro da pasta /out/ no seu primeiro commit
-# para que a pasta exista para todos.
 /out/*
 !/out/.gitkeep
 
-# 5. Logs (Opcional, mas boa prática)
-# Ignora arquivos de log, caso sejam gerados fora da pasta /out/
 *.log
