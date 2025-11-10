@@ -1,0 +1,64 @@
+{
+  "caso1": {
+    "quantum": 2,
+    "sobrecarga_contexto": 0,
+    "custo_disco": 3,
+    "seed": 42,
+    "processos": [
+      {"id": "P1", "chegada": 0, "execucao": 5, "prioridade": 1, "deadline": 10},
+      {"id": "P2", "chegada": 0, "execucao": 2, "prioridade": 1, "deadline": 10},
+      {"id": "P3", "chegada": 0, "execucao": 3, "prioridade": 1, "deadline": 10}
+    ]
+  },
+  "caso2": {
+    "quantum": 2,
+    "sobrecarga_contexto": 1,
+    "custo_disco": 3,
+    "seed": 42,
+    "processos": [
+      {"id": "P1", "chegada": 0, "execucao": 5, "deadline": 8,  "prioridade": 2},
+      {"id": "P2", "chegada": 1, "execucao": 4, "deadline": 12, "prioridade": 1},
+      {"id": "P3", "chegada": 3, "execucao": 2, "deadline": 20, "prioridade": 3}
+    ]
+  },
+  "caso3": {
+    "quantum": 2,
+    "sobrecarga_contexto": 1,
+    "custo_disco": 3,
+    "seed": 42,
+    "processos": [
+      {"id": "P-Longo", "chegada": 0, "execucao": 10, "prioridade": 1, "deadline": 20},
+      {"id": "P-Urgente", "chegada": 2, "execucao": 3, "prioridade": 1, "deadline": 8}
+    ]
+  },
+  "caso4": {
+    "quantum": 2,
+    "sobrecarga_contexto": 1,
+    "custo_disco": 3,
+    "seed": 42,
+    "processos": [
+      {"id": "P1", "chegada": 0, "execucao": 3, "prioridade": 1, "deadline": 5},
+      {"id": "P2", "chegada": 8, "execucao": 2, "prioridade": 1, "deadline": 12}
+    ]
+  },
+  "caso5": {
+    "quantum": 2,
+    "sobrecarga_contexto": 0,
+    "custo_disco": 3,
+    "seed": 42,
+    "processos": [
+      {"id": "P1-PriAlta", "chegada": 0, "execucao": 5, "prioridade": 1, "deadline": 99},
+      {"id": "P2-PriBaixa", "chegada": 0, "execucao": 5, "prioridade": 3, "deadline": 99}
+    ]
+  },
+  "caso6": {
+    "quantum": 2,
+    "sobrecarga_contexto": 1,
+    "custo_disco": 3,
+    "seed": 42,
+    "processos": [
+      {"id": "P1", "chegada": 0, "execucao": 4, "prioridade": 1, "deadline": 99, "num_paginas": 4},
+      {"id": "P2", "chegada": 1, "execucao": 2, "prioridade": 1, "deadline": 99, "num_paginas": 4}
+    ]
+  }
+}
