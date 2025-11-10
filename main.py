@@ -48,7 +48,7 @@ def carregar_config(caminho_arquivo: str) -> Dict[str, Any]:
         sys.exit(1)
 
 
-def criar_escalonador(algoritmo: str, quantum: int):
+def criar_escalonador(algoritmo: str, quantum: int, config: Dict[str, Any]) -> Any:
     """Factory para criar a instância do escalonador correto."""
     
     algoritmos_map = {
