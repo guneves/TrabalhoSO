@@ -1,4 +1,3 @@
-# src/simulador.py
 from typing import List, Optional, Dict, Any, Tuple
 from .escalonadores import (
     EscalonadorBase, 
@@ -104,7 +103,10 @@ class Simulador:
     def _processar_chegadas(self):
         """
         Verifica se novos processos chegaram no tempo_atual.
+
         Se sim, os adiciona ao escalonador e verifica preempção por evento.
+
+        Cada algoritmo vai dar override nos métodos ädicionar_processos" e "verificar_preempcao" para as especificações próprias
         """
         while self.processos_nao_chegaram and \
               self.processos_nao_chegaram[0].chegada <= self.tempo_atual:
@@ -116,7 +118,7 @@ class Simulador:
             if self.processo_executando:
                 deve_preemptar = self.escalonador.verificar_preempcao(
                     self.processo_executando, novo_processo, self.tempo_atual
-                ) #Cada algoritmo preemptivo vai dar override nesse método para as especificações próprias
+                ) 
 
             self.escalonador.adicionar_processo(novo_processo, self.tempo_atual)
 

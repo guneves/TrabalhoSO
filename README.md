@@ -2,9 +2,9 @@
 
 # 🚀 Simulador de Escalonamento de SO
 
-[cite_start]Este projeto é um simulador de algoritmos de escalonamento de processos (FIFO, SJF, RR, EDF, CFS) [cite: 8-14] desenvolvido para a disciplina de Sistemas Operacionais.
+Este projeto é um simulador de algoritmos de escalonamento de processos (FIFO, SJF, RR, EDF, CFS) [cite: 8-14] desenvolvido para a disciplina de Sistemas Operacionais.
 
-[cite_start]O objetivo é carregar processos a partir de um arquivo de entrada (JSON) [cite: 112-122][cite_start], executar a simulação e gerar como saída um Gráfico de Gantt [cite: 47] [cite_start]e métricas de desempenho[cite: 53, 54].
+O objetivo é carregar processos a partir de um arquivo de entrada (JSON) , executar a simulação e gerar como saída um Gráfico de Gantt e métricas de desempenho[cite: 53, 54].
 
 ## 🔧 Setup do Ambiente
 
