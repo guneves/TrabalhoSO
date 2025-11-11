@@ -1,5 +1,3 @@
-# src/escalonadores/sjf.py
-
 from typing import Optional
 
 from .base import EscalonadorBase
