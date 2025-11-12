@@ -17,8 +17,8 @@ class Processo:
                  chegada: int, 
                  execucao: int, 
                  prioridade: int, 
-                 deadline: int,          # <- Este é o deadline ABSOLUTO
-                 deadline_relativo: int, # <- O NOVO PARÂMETRO
+                 deadline: int,          
+                 deadline_relativo: int, 
                  num_paginas: int = 0):
         
         self.id: str = id

@@ -119,8 +119,8 @@ for i, tab in enumerate(tabs):
                 'id': id_proc,
                 'chegada': chegada,
                 'execucao': execucao,
-                # O deadline absoluto é a soma da chegada + o valor do input
                 'deadline': chegada + deadline,
+                'deadline_relativo': deadline,
                 'prioridade': prioridade
             })
 
