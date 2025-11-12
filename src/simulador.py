@@ -52,7 +52,6 @@ class Simulador:
             processos, key=lambda p: p.chegada
         )
         self.processos_finalizados: List[Processo] = []
-        self.processo_alvo_pos_sobrecarga: Optional[Processo] = None
 
         self.log_gantt_ticks: List[Dict[str, Any]] = []
         self.metricas_globais: Dict[str, Any] = {
@@ -103,10 +102,7 @@ class Simulador:
     def _processar_chegadas(self):
         """
         Verifica se novos processos chegaram no tempo_atual.
-
         Se sim, os adiciona ao escalonador e verifica preempção por evento.
-
-        Cada algoritmo vai dar override nos métodos "adicionar_processos" e "verificar_preempcao" para as especificações próprias
         """
         while self.processos_nao_chegaram and \
               self.processos_nao_chegaram[0].chegada <= self.tempo_atual:
@@ -123,6 +119,7 @@ class Simulador:
             self.escalonador.adicionar_processo(novo_processo, self.tempo_atual)
 
             if deve_preemptar:
+                # Preempção por evento (ex: EDF, CFS)
                 self.metricas_globais["total_preempcoes"] += 1
                 self._iniciar_troca_contexto(processo_saindo=self.processo_executando, 
                                             preemptado=True)
@@ -143,7 +140,7 @@ class Simulador:
     def _finalizar_processo(self, processo: Processo):
         """
         Processo terminou sua execução. Calcula métricas, libera a CPU
-        e inicia uma troca de contexto (para buscar o próximo).
+        e inicia uma troca (sem sobrecarga) para buscar o próximo.
         """
         processo.status = "terminado"
         processo.tempo_termino = self.tempo_atual
@@ -151,36 +148,48 @@ class Simulador:
         
         self.processos_finalizados.append(processo)
         
-        # <-- CORREÇÃO 2: LOG DUPLICADO REMOVIDO DAQUI
-        # O log de execução já foi feito em _processar_execucao
-        
+        # Inicia a troca, marcando 'preemptado=False'
+        # para que *não* haja sobrecarga.
         self._iniciar_troca_contexto(processo_saindo=processo, 
                                     preemptado=False)
 
     def _iniciar_troca_contexto(self, processo_saindo: Processo, preemptado: bool):
         """
-        Inicia o estado de sobrecarga da CPU.
-        Se o processo foi 'preemptado', ele é devolvido à fila de prontos.
-        """
-        # <-- CORREÇÃO 2: LOG DUPLICADO REMOVIDO DAQUI
-        # O log de execução já foi feito em _processar_execucao
+        Inicia o estado de sobrecarga (se aplicável) ou ociosidade.
 
+        Args:
+            processo_saindo (Processo): O processo que estava na CPU.
+            preemptado (bool): True se a troca foi por preempção (quantum/evento),
+                               False se foi por término normal do processo.
+        """
+        
         if preemptado:
+            # Se foi preempção, devolve o processo para a fila
             processo_saindo.status = "pronto"
             self.escalonador.adicionar_processo(processo_saindo, self.tempo_atual)
 
         self.processo_executando = None
         self.metricas_globais["total_trocas_contexto"] += 1
         
-        if self.sobrecarga_contexto == 0:
-            self.cpu_status = "ocioso"
-        else:
+        # --- CORREÇÃO PRINCIPAL ---
+        # Só aplica sobrecarga se:
+        # 1. O custo de sobrecarga é > 0
+        # 2. A troca foi causada por PREEMPÇÃO (Quantum ou Evento).
+        #
+        # Algoritmos não preemptivos (FIFO, SJF) sempre terminarão
+        # com 'preemptado=False', pulando a sobrecarga.
+        
+        if self.sobrecarga_contexto > 0 and preemptado:
             self.cpu_status = "sobrecarga"
             self.tempo_sobrecarga_restante = self.sobrecarga_contexto
+        else:
+            # Se não há custo ou se o processo terminou normalmente,
+            # a CPU fica ociosa e pronta para buscar o próximo.
+            self.cpu_status = "ocioso"
 
     def _iniciar_execucao(self, processo: Processo):
         """
-        Transição de 'ocioso' (ou 'sobrecarga' sem custo) para 'executando'.
+        Transição de 'ocioso' para 'executando'.
         """
         self.cpu_status = "executando"
         self.processo_executando = processo
@@ -204,12 +213,9 @@ class Simulador:
         
         self._logar_gantt_evento(processo.id, "executando")
 
-        # <-- CORREÇÃO 1: LÓGICA DO CFS-SIM ADICIONADA AQUI
-        # "A cada fatia de CPU (Δt), o vruntime do processo ativo aumenta"
+        # Lógica Específica do CFS-Sim
         if isinstance(self.escalonador, EscalonadorCFSSim):
-            # O Δt (delta_t) aqui é 1, pois estamos em um loop tick-a-tick
             self.escalonador.atualizar_vruntime_processo_executando(processo, 1)
-        # --- FIM DA CORREÇÃO 1 ---
 
         processo.tempo_restante -= 1
         self.tempo_execucao_fatia_atual += 1
@@ -227,7 +233,7 @@ class Simulador:
 
     def _processar_sobrecarga(self):
         """
-        Estado 2: CPU está em troca de contexto.
+        Estado 2: CPU está em troca de contexto (preemptiva).
         Apenas conta o tempo.
         """
         self._logar_gantt_evento("CPU", "sobrecarga")
@@ -245,14 +251,10 @@ class Simulador:
         proximo_processo = self.escalonador.proximo_processo()
 
         if proximo_processo:
-            # (A sobrecarga já foi paga na *saída* do processo anterior)
             self._iniciar_execucao(proximo_processo)
             
-            # <-- CORREÇÃO 3: BUG DE ATRASO DE 1 TICK
-            # Processa o primeiro tick de execução *imediatamente*
-            # para que o processo não perca o tick atual.
+            # Processa o primeiro tick imediatamente
             self._processar_execucao()
-            # --- FIM DA CORREÇÃO 3 ---
         
         else:
             self._logar_gantt_evento("CPU", "ocioso")
