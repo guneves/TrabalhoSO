@@ -107,7 +107,8 @@ for i, tab in enumerate(tabs):
                                     min_value=0, value=default_val['chegada'], key=f'ch_{i}')
         execucao = col2.number_input(f'Tempo de Execução ({id_proc})', 
                                      min_value=1, value=default_val['execucao'], key=f'ex_{i}')
-        deadline = col3.number_input(f'Deadline ({id_proc})', 
+        # Renomeamos a label para "Deadline (Relativo)" para ficar claro na UI
+        deadline = col3.number_input(f'Deadline (Relativo) ({id_proc})', 
                                       min_value=1, value=default_val['deadline'], key=f'dl_{i}')
         prioridade = col4.number_input(f'Prioridade ({id_proc})', 
                                         min_value=1, value=default_val['prioridade'], key=f'pr_{i}')
@@ -118,9 +119,10 @@ for i, tab in enumerate(tabs):
                 'id': id_proc,
                 'chegada': chegada,
                 'execucao': execucao,
-                'deadline': deadline,
+                # O deadline absoluto é a soma da chegada + o valor do input
+                'deadline': chegada + deadline,
+                'deadline_relativo': deadline,
                 'prioridade': prioridade
-                # 'num_paginas' pode ser adicionado aqui para o Bônus
             })
 
 st.markdown("---")
@@ -137,6 +139,7 @@ if st.button('Executar Simulação', type="primary"):
         with st.spinner('Simulando...'):
             try:
                 # 1. Criar Processos
+                # Esta linha agora recebe o deadline já somado (relativo -> absoluto)
                 lista_processos = [Processo(**p) for p in processos_input]
                 
                 # 2. Criar Escalonador (Lógica copiada do main.py)
