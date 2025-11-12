@@ -12,10 +12,10 @@ try:
     from src.simulador import Simulador
     from src.escalonadores import (
         EscalonadorFIFO,
-        #EscalonadorSJF,
-        #EscalonadorRoundRobin,
-        #EscalonadorEDF,
-        #EscalonadorCFSSim
+        EscalonadorSJF,
+        EscalonadorRoundRobin,
+        EscalonadorEDF,
+        EscalonadorCFSSim
     )
     # TODO: Crie estes arquivos/funções
     from src.visualizacao import gerar_gantt

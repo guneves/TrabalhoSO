@@ -3,7 +3,7 @@ from .fifo import EscalonadorFIFO
 from .sjf import EscalonadorSJF
 from .round_robin import EscalonadorRoundRobin
 from .edf import EscalonadorEDF
-from .cfs import EscalonadorCFSSim
+#from .cfs import EscalonadorCFSSim
 
 __all__ = [
     'EscalonadorBase',
