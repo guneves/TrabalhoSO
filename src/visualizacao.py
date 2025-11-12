@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from typing import List, Dict, Any
 
+# Define o mapa de cores com base nos requisitos do PDF
 CORES_MAP = {
-    'execucao': 'green',     #
-    'sobrecarga': 'red',       #
-    'estouro': 'gray',       #
+    'execucao': 'green',     # [cite: 48]
+    'sobrecarga': 'red',       # [cite: 50]
+    'estouro': 'gray',       # [cite: 51]
     'ocioso': 'whitesmoke',   # Cor para CPU ociosa (não especificada, mas útil)
-    'bloqueado_mem': 'blue'  # (Bônus)
+    'bloqueado_mem': 'blue'  # (Bônus) [cite: 111]
 }
 
 def gerar_gantt(log_execucao: List[Dict[str, Any]], 
@@ -79,7 +80,7 @@ def gerar_gantt(log_execucao: List[Dict[str, Any]],
             deadline = proc['deadline']
             pos_y_deadline = y_pos[proc['id']]
             
-            # Desenha uma linha vertical tracejada vermelha
+            # Desenha uma linha vertical tracejada vermelha [cite: 52]
             ax.vlines(
                 x=deadline, 
                 ymin=pos_y_deadline - 0.4, 
@@ -92,4 +93,45 @@ def gerar_gantt(log_execucao: List[Dict[str, Any]],
 
     # --- 5. Configurar Legenda e Rótulos ---
     
-    # Cria "patches" (amostras
+    # Cria "patches" (amostras de cor) para a legenda
+    legend_patches = [
+        mpatches.Patch(color='green', label='Execução'),         # [cite: 48]
+        mpatches.Patch(color='red', label='Sobrecarga'),         # [cite: 50]
+        mpatches.Patch(color='gray', label='Estouro de Deadline'), # [cite: 51]
+        mpatches.Patch(color='whitesmoke', label='CPU Ociosa', edgecolor='gray'),
+    ]
+    # Adiciona a linha de deadline à legenda
+    legend_handles = [
+        *legend_patches,
+        plt.Line2D([0], [0], color='red', linestyle='dashed', lw=2, label='Deadline') # [cite: 52]
+    ]
+
+    ax.legend(handles=legend_handles, loc='upper right', fontsize='small')
+
+    # --- 6. Formatar o Gráfico ---
+    ax.set_title(f"Gráfico de Gantt - Algoritmo: {algoritmo_nome}", fontsize=16)
+    
+    # Configura o eixo Y (Processos)
+    ax.set_yticks(ticks=list(y_pos.values()))
+    ax.set_yticklabels(labels=list(y_pos.keys()))
+    ax.set_ylabel("Processos", fontsize=12)
+    
+    # Configura o eixo X (Tempo)
+    ax.set_xlabel("Tempo (unidade de tempo)", fontsize=12)
+    ax.set_xlim(0, max_time * 1.05) # Limite X um pouco além do tempo final
+    ax.grid(True, axis='x', linestyle='--', alpha=0.7) # Grade vertical
+    
+    # Inverte o eixo Y para que P1 (ou o de menor ID) fique no topo
+    ax.invert_yaxis() 
+    
+    # Garante que tudo caiba na imagem
+    plt.tight_layout()
+
+    # --- 7. Salvar o Arquivo ---
+    try:
+        plt.savefig(caminho_saida)
+    except Exception as e:
+        print(f"Erro ao salvar o gráfico em '{caminho_saida}': {e}")
+    finally:
+        # Fecha a figura para liberar memória
+        plt.close(fig)
