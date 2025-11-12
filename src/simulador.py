@@ -106,7 +106,7 @@ class Simulador:
 
         Se sim, os adiciona ao escalonador e verifica preempção por evento.
 
-        Cada algoritmo vai dar override nos métodos ädicionar_processos" e "verificar_preempcao" para as especificações próprias
+        Cada algoritmo vai dar override nos métodos "adicionar_processos" e "verificar_preempcao" para as especificações próprias
         """
         while self.processos_nao_chegaram and \
               self.processos_nao_chegaram[0].chegada <= self.tempo_atual:
@@ -151,7 +151,8 @@ class Simulador:
         
         self.processos_finalizados.append(processo)
         
-        self._logar_gantt_evento(processo.id, "executando")
+        # <-- CORREÇÃO 2: LOG DUPLICADO REMOVIDO DAQUI
+        # O log de execução já foi feito em _processar_execucao
         
         self._iniciar_troca_contexto(processo_saindo=processo, 
                                     preemptado=False)
@@ -161,7 +162,8 @@ class Simulador:
         Inicia o estado de sobrecarga da CPU.
         Se o processo foi 'preemptado', ele é devolvido à fila de prontos.
         """
-        self._logar_gantt_evento(processo_saindo.id, "executando")
+        # <-- CORREÇÃO 2: LOG DUPLICADO REMOVIDO DAQUI
+        # O log de execução já foi feito em _processar_execucao
 
         if preemptado:
             processo_saindo.status = "pronto"
@@ -202,6 +204,13 @@ class Simulador:
         
         self._logar_gantt_evento(processo.id, "executando")
 
+        # <-- CORREÇÃO 1: LÓGICA DO CFS-SIM ADICIONADA AQUI
+        # "A cada fatia de CPU (Δt), o vruntime do processo ativo aumenta"
+        if isinstance(self.escalonador, EscalonadorCFSSim):
+            # O Δt (delta_t) aqui é 1, pois estamos em um loop tick-a-tick
+            self.escalonador.atualizar_vruntime_processo_executando(processo, 1)
+        # --- FIM DA CORREÇÃO 1 ---
+
         processo.tempo_restante -= 1
         self.tempo_execucao_fatia_atual += 1
 
@@ -210,7 +219,6 @@ class Simulador:
             return
 
         #Verificar Fim de Quantum (REGRA GLOBAL PREEMPTIVA)
-        # Se o escalonador for preemptivo e o quantum estourou
         if (self.eh_preemptivo and
             self.quantum is not None and
             self.tempo_execucao_fatia_atual >= self.quantum):
@@ -239,6 +247,12 @@ class Simulador:
         if proximo_processo:
             # (A sobrecarga já foi paga na *saída* do processo anterior)
             self._iniciar_execucao(proximo_processo)
+            
+            # <-- CORREÇÃO 3: BUG DE ATRASO DE 1 TICK
+            # Processa o primeiro tick de execução *imediatamente*
+            # para que o processo não perca o tick atual.
+            self._processar_execucao()
+            # --- FIM DA CORREÇÃO 3 ---
         
         else:
             self._logar_gantt_evento("CPU", "ocioso")
@@ -267,8 +281,13 @@ class Simulador:
                             self.metricas_globais["tempo_total_ocioso"] - 
                             self.metricas_globais["tempo_total_sobrecarga"])
 
-        self.metricas_globais["utilizacao_cpu_percent"] = (tempo_executando / tempo_total) * 100
-        self.metricas_globais["ociosidade_cpu_percent"] = (
-            self.metricas_globais["tempo_total_ocioso"] / tempo_total
-        ) * 100
+        if tempo_total > 0:
+            self.metricas_globais["utilizacao_cpu_percent"] = (tempo_executando / tempo_total) * 100
+            self.metricas_globais["ociosidade_cpu_percent"] = (
+                self.metricas_globais["tempo_total_ocioso"] / tempo_total
+            ) * 100
+        else:
+            self.metricas_globais["utilizacao_cpu_percent"] = 0
+            self.metricas_globais["ociosidade_cpu_percent"] = 0
+            
         self.metricas_globais["tempo_total_simulacao"] = tempo_total
