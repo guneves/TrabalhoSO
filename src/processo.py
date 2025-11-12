@@ -17,14 +17,16 @@ class Processo:
                  chegada: int, 
                  execucao: int, 
                  prioridade: int, 
-                 deadline: int, 
+                 deadline: int,          # <- Este é o deadline ABSOLUTO
+                 deadline_relativo: int, # <- O NOVO PARÂMETRO
                  num_paginas: int = 0):
         
         self.id: str = id
         self.chegada: int = chegada
         self.execucao: int = execucao           
         self.prioridade: int = prioridade         
-        self.deadline: int = deadline          
+        self.deadline: int = deadline     
+        self.deadline_relativo: int = deadline_relativo     
         self.num_paginas: int = num_paginas   
 
         self.tempo_restante: int = self.execucao
