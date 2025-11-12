@@ -45,7 +45,6 @@ def _converter_log_ticks_para_eventos(log_ticks: List[Dict[str, Any]]) -> List[D
         elif id_proc != evento_atual['id'] or tipo != evento_atual['tipo']:
             evento_atual['fim'] = tick 
             eventos_agrupados.append(evento_atual)
-            
             evento_atual = {'id': id_proc, 'inicio': tick, 'tipo': tipo}
             
     if evento_atual:
@@ -64,12 +63,12 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
 
     Args:
         log_ticks: O log *tick-a-tick* vindo do 'simulador.py'.
-        processos_terminados: A lista de objetos Processo finalizados
-                              (usada para deadlines e status de estouro).
+        processos_terminados: A lista de objetos Processo finalizados.
         caminho_saida: Onde salvar o arquivo .png (ex: 'out/gantt.png').
         algoritmo_nome: O nome do algoritmo (ex: 'FIFO') para o título.
     """
     
+    # --- 1. Converter o Log de Ticks para Eventos ---
     eventos_agrupados = _converter_log_ticks_para_eventos(log_ticks)
     if not eventos_agrupados:
         print("Aviso: Nenhum evento para plotar no gráfico de Gantt.")
@@ -78,7 +77,6 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
     fig, ax = plt.subplots(figsize=(15, 8))
 
     ids_processos = sorted(list(set(p.id for p in processos_terminados)), reverse=True)
-    
     y_pos = {id_proc: i for i, id_proc in enumerate(ids_processos)}
     
     if any(e['id'] == 'CPU' for e in eventos_agrupados):
@@ -104,11 +102,14 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
         if id_proc in y_pos:
             pos_y_atual = y_pos[id_proc]
             cor = CORES_MAP.get(tipo, 'black') 
+
             if tipo == 'execucao' and \
+               algoritmo_nome == 'EDF' and \
                id_proc in processos_map and \
                processos_map[id_proc].deadline_ok is False:
                 
                 cor = CORES_MAP['estouro']
+            # --- FIM DA CORREÇÃO ---
 
             ax.barh(y=pos_y_atual, width=duracao, left=inicio, height=0.7,
                     color=cor, edgecolor='black', linewidth=0.5)
@@ -121,10 +122,11 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
             ax.vlines(x=deadline, ymin=pos_y_deadline - 0.4, ymax=pos_y_deadline + 0.4, 
                       colors='red', linestyles='dashed', lw=2,
                       label='Deadline' if 'deadline' not in ax.get_legend_handles_labels()[1] else "")
+
     legend_patches = [
-        mpatches.Patch(color=CORES_MAP['execucao'], label='Execução'),         
-        mpatches.Patch(color=CORES_MAP['sobrecarga'], label='Sobrecarga'),       
-        mpatches.Patch(color=CORES_MAP['estouro'], label='Estouro de Deadline'), 
+        mpatches.Patch(color=CORES_MAP['execucao'], label='Execução'),
+        mpatches.Patch(color=CORES_MAP['sobrecarga'], label='Sobrecarga'),
+        mpatches.Patch(color=CORES_MAP['estouro'], label='Estouro de Deadline'),
         mpatches.Patch(color=CORES_MAP['ocioso'], label='CPU Ociosa', edgecolor='gray'),
     ]
     legend_handles = [
