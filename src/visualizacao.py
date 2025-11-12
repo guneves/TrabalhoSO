@@ -80,7 +80,7 @@ def gerar_gantt(log_execucao: List[Dict[str, Any]],
             deadline = proc['deadline']
             pos_y_deadline = y_pos[proc['id']]
             
-            # [cite_start]Desenha uma linha vertical tracejada vermelha [cite: 52]
+            # Desenha uma linha vertical tracejada vermelha [cite: 52]
             ax.vlines(
                 x=deadline, 
                 ymin=pos_y_deadline - 0.4, 
@@ -95,15 +95,15 @@ def gerar_gantt(log_execucao: List[Dict[str, Any]],
     
     # Cria "patches" (amostras de cor) para a legenda
     legend_patches = [
-        [cite_start]mpatches.Patch(color='green', label='Execução'),         # [cite: 48]
-        [cite_start]mpatches.Patch(color='red', label='Sobrecarga'),         # [cite: 50]
-        [cite_start]mpatches.Patch(color='gray', label='Estouro de Deadline'), # [cite: 51]
+        mpatches.Patch(color='green', label='Execução'),         # [cite: 48]
+        mpatches.Patch(color='red', label='Sobrecarga'),         # [cite: 50]
+        mpatches.Patch(color='gray', label='Estouro de Deadline'), # [cite: 51]
         mpatches.Patch(color='whitesmoke', label='CPU Ociosa', edgecolor='gray'),
     ]
     # Adiciona a linha de deadline à legenda
     legend_handles = [
         *legend_patches,
-        [cite_start]plt.Line2D([0], [0], color='red', linestyle='dashed', lw=2, label='Deadline') # [cite: 52]
+        plt.Line2D([0], [0], color='red', linestyle='dashed', lw=2, label='Deadline') # [cite: 52]
     ]
 
     ax.legend(handles=legend_handles, loc='upper right', fontsize='small')
