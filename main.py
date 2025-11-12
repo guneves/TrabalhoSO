@@ -134,7 +134,10 @@ def main():
     imprimir_tabela_final(resultados['processos_terminados'])
     
     print("\n--- Resumo Quantitativo ---")
-    imprimir_resumo_quantitativo(resultados['metricas_globais'])
+    imprimir_resumo_quantitativo(
+        resultados['metricas_globais'], 
+        resultados['processos_terminados']
+    )
 
     # Saída 2: Gráfico de Gantt (Arquivo)
     if args.gantt:
