@@ -48,9 +48,9 @@ def carregar_config(caminho_arquivo: str) -> Dict[str, Any]:
         sys.exit(1)
 
 
-def criar_escalonador(algoritmo: str, quantum: int, config: Dict[str, Any]) -> Any:
+def criar_escalonador(algoritmo: str) -> Any:
     """Factory para criar a instância do escalonador correto."""
-    
+
     algoritmos_map = {
         "FIFO": EscalonadorFIFO,
         "SJF": EscalonadorSJF,
@@ -64,14 +64,9 @@ def criar_escalonador(algoritmo: str, quantum: int, config: Dict[str, Any]) -> A
         print(f"Opções válidas: {list(algoritmos_map.keys())}", file=sys.stderr)
         sys.exit(1)
 
-    # Lida com o caso especial do Round-Robin que precisa do quantum
-    if algoritmo == "RR":
-        if 'quantum' not in config:
-            print("Erro: 'quantum' não definido no JSON (necessário para RR).", file=sys.stderr)
-            sys.exit(1)
-        return EscalonadorRoundRobin(quantum=config['quantum'])
-    else:
-        return algoritmos_map[algoritmo]()
+    # A lógica do Quantum é tratada pelo Simulador,
+    # não pelo escalonador individual.
+    return algoritmos_map[algoritmo]()
 
 
 def main():
@@ -110,15 +105,16 @@ def main():
         sys.exit(1)
 
     # 3. Criar o Escalonador (Strategy)
-    escalonador = criar_escalonador(args.alg, config.get('quantum'))
-    
+    escalonador = criar_escalonador(args.alg)  
+
     # 4. Instanciar e Executar o Simulador
     print(f"Iniciando simulação com o algoritmo: {args.alg}")
     
     simulador = Simulador(
         processos=lista_processos,
         escalonador=escalonador,
-        sobrecarga_contexto=config['sobrecarga_contexto']
+        sobrecarga_contexto=config['sobrecarga_contexto'],
+        quantum=config.get('quantum') # <-- ADICIONE ESTA LINHA
     )
     
     # O método 'executar()' deve retornar tudo que precisamos para as saídas
@@ -146,8 +142,8 @@ def main():
         os.makedirs(os.path.dirname(args.gantt), exist_ok=True)
         
         gerar_gantt(
-            log_execucao=resultados['log_gantt'],
-            processos_originais=config['processos'], # Para plotar deadlines
+            log_ticks=resultados['log_gantt'],
+            processos_terminados=resultados['processos_terminados'],
             caminho_saida=args.gantt,
             algoritmo_nome=args.alg
         )

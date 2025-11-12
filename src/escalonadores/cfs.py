@@ -1,5 +1,3 @@
-# src/escalonadores/cfs.py
-
 import math
 from typing import Optional
 
