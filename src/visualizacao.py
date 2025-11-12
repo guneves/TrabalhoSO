@@ -4,11 +4,11 @@ from typing import List, Dict, Any
 
 # Define o mapa de cores com base nos requisitos do PDF
 CORES_MAP = {
-    [cite_start]'execucao': 'green',     # [cite: 48]
-    [cite_start]'sobrecarga': 'red',       # [cite: 50]
-    [cite_start]'estouro': 'gray',       # [cite: 51]
+    'execucao': 'green',     # [cite: 48]
+    'sobrecarga': 'red',       # [cite: 50]
+    'estouro': 'gray',       # [cite: 51]
     'ocioso': 'whitesmoke',   # Cor para CPU ociosa (não especificada, mas útil)
-    [cite_start]'bloqueado_mem': 'blue'  # (Bônus) [cite: 111]
+    'bloqueado_mem': 'blue'  # (Bônus) [cite: 111]
 }
 
 def gerar_gantt(log_execucao: List[Dict[str, Any]], 
