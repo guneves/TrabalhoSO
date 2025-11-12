@@ -33,7 +33,10 @@ def gerar_dataframe_metricas(processos_terminados: List[Processo]) -> pd.DataFra
             'ID': p.id,
             'Chegada': p.chegada,
             'Execução': p.execucao,
-            'Deadline': p.deadline,
+            
+            'Deadline (Relativo)': p.deadline_relativo,
+            'Deadline (Real)': p.deadline,
+            
             'Priorid.': p.prioridade,
             'Início': inicio,
             'Término': p.tempo_termino,
@@ -42,9 +45,8 @@ def gerar_dataframe_metricas(processos_terminados: List[Processo]) -> pd.DataFra
             'D. OK?': deadline_ok_str
         })
     
-    colunas = ['ID', 'Chegada', 'Execução', 'Deadline', 'Priorid.', 
+    colunas = ['ID', 'Chegada', 'Execução', 'Deadline (Relativo)', 'Deadline (Real)', 'Priorid.', 
                'Início', 'Término', 'Turnaround', 'Espera', 'D. OK?']
-    
     return pd.DataFrame(dados_metricas, columns=colunas)
 
 def gerar_dict_resumo(
