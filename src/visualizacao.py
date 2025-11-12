@@ -56,23 +56,29 @@ def _converter_log_ticks_para_eventos(log_ticks: List[Dict[str, Any]]) -> List[D
 
 def gerar_gantt(log_ticks: List[Dict[str, Any]], 
                  processos_terminados: List[Processo], 
-                 caminho_saida: str, 
+                 caminho_saida: str,  # <-- O argumento ainda existe, mas não é usado
                  algoritmo_nome: str):
     """
-    Gera e salva um gráfico de Gantt com base no log de execução do simulador.
+    Gera um gráfico de Gantt e RETORNA o objeto 'figura' do Matplotlib.
 
     Args:
         log_ticks: O log *tick-a-tick* vindo do 'simulador.py'.
         processos_terminados: A lista de objetos Processo finalizados.
-        caminho_saida: Onde salvar o arquivo .png (ex: 'out/gantt.png').
+        caminho_saida: (Ignorado nesta versão)
         algoritmo_nome: O nome do algoritmo (ex: 'FIFO') para o título.
+    
+    Returns:
+        matplotlib.figure.Figure: O objeto da figura pronto para ser
+                                  exibido pelo Streamlit (st.pyplot()).
     """
     
-    # --- 1. Converter o Log de Ticks para Eventos ---
     eventos_agrupados = _converter_log_ticks_para_eventos(log_ticks)
     if not eventos_agrupados:
         print("Aviso: Nenhum evento para plotar no gráfico de Gantt.")
-        return
+        # Retorna uma figura vazia em caso de falha
+        fig, ax = plt.subplots()
+        ax.text(0.5, 0.5, 'Nenhum dado para exibir.', horizontalalignment='center', verticalalignment='center')
+        return fig
 
     fig, ax = plt.subplots(figsize=(15, 8))
 
@@ -109,7 +115,6 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
                processos_map[id_proc].deadline_ok is False:
                 
                 cor = CORES_MAP['estouro']
-            # --- FIM DA CORREÇÃO ---
 
             ax.barh(y=pos_y_atual, width=duracao, left=inicio, height=0.7,
                     color=cor, edgecolor='black', linewidth=0.5)
@@ -148,9 +153,4 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
     ax.invert_yaxis() 
     plt.tight_layout()
 
-    try:
-        plt.savefig(caminho_saida)
-    except Exception as e:
-        print(f"Erro ao salvar o gráfico em '{caminho_saida}': {e}")
-    finally:
-        plt.close(fig)
+    return fig
