@@ -33,7 +33,7 @@ st.title('Simulador de Escalonamento de Processos')
 
 # Global configs
 
-st.subheader('1. Configurações Globais da Simulação')
+st.subheader('Configurações Globais da Simulação')
 
 col_alg, col_q, col_s = st.columns(3)
 
@@ -62,7 +62,7 @@ with col_s:
 st.markdown("---")
 
 # Processos
-st.subheader('2. Definição dos Processos')
+st.subheader('Definição dos Processos')
 
 processos_input = []
 num_processos = 6 # Seu requisito de 6 boxes
@@ -114,7 +114,7 @@ for i, tab in enumerate(tabs):
 st.markdown("---")
 
 # Execução
-st.subheader('3. Executar Simulação e Ver Resultados')
+st.subheader('Executar Simulação e Ver Resultados')
 
 if st.button('Executar Simulação', type="primary"):
     
