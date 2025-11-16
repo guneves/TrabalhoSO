@@ -24,7 +24,7 @@ def gerar_dataframe_metricas(processos_terminados: List[Processo]) -> pd.DataFra
 
     for p in processos_terminados:
         
-        turnaround = p.turnaround if p.turnaround is not None else 0
+        turnaround = (p.turnaround if p.turnaround is not None else 0) + 1
         espera = p.tempo_espera if p.tempo_espera is not None else 0
         deadline_ok_str = "Sim" if p.deadline_ok else "Não"
         inicio = p.tempo_primeira_execucao if p.tempo_primeira_execucao is not None else -1
@@ -39,7 +39,7 @@ def gerar_dataframe_metricas(processos_terminados: List[Processo]) -> pd.DataFra
             
             'Priorid.': p.prioridade,
             'Início': inicio,
-            'Término': p.tempo_termino,
+            'Término': p.tempo_termino + 1,
             'Turnaround': turnaround,
             'Espera': espera,
             'D. OK?': deadline_ok_str
@@ -69,7 +69,7 @@ def gerar_dict_resumo(
     media_espera = 0
 
     if num_processos > 0:
-        soma_turnaround = sum(p.turnaround if p.turnaround is not None else 0 for p in processos_terminados)
+        soma_turnaround = sum((p.turnaround if p.turnaround is not None else 0) + 1 for p in processos_terminados)
         soma_espera = sum(p.tempo_espera if p.tempo_espera is not None else 0 for p in processos_terminados)
             
         media_turnaround = soma_turnaround / num_processos
@@ -81,7 +81,7 @@ def gerar_dict_resumo(
         "Total de Trocas de Contexto": total_trocas_contexto,
         "Taxa de Throughput": f"{throughput:.4f} processos/u.t.",
         "% de Ociosidade da CPU": f"{percent_ociosidade:.2f}%",
-        "Tempo Médio de Turnaround": f"{media_turnaround:.2f} u.t.",
+        "Tempo Médio de Turnaround": f"{media_turnaround:.2f} u.t.", 
         "Tempo Médio de Espera": f"{media_espera:.2f} u.t."
     }
     
