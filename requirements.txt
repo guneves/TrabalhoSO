@@ -1,10 +1,3 @@
-# Dependências principais do projeto
-
-# Para análise de métricas e geração de tabelas
 pandas
-
-# Para visualização e geração do gráfico de Gantt
 matplotlib
-
-#Para criação de aplicações web interativas
 streamlit
