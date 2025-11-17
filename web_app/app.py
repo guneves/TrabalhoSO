@@ -66,12 +66,12 @@ tab_nomes = [f'Processo {i+1}' for i in range(num_processos)]
 tabs = st.tabs(tab_nomes)
 
 defaults = [
-    {'chegada': 0, 'execucao': 4, 'deadline': 7, 'prioridade': 2}, # P1
-    {'chegada': 2, 'execucao': 2, 'deadline': 5, 'prioridade': 1}, # P2
-    {'chegada': 4, 'execucao': 1, 'deadline': 8, 'prioridade': 3}, # P3
-    {'chegada': 6, 'execucao': 3, 'deadline': 10, 'prioridade': 1}, # P4
-    {'chegada': 8, 'execucao': 3, 'deadline': 15, 'prioridade': 2}, # P5
-    {'chegada': 10, 'execucao': 4, 'deadline': 25, 'prioridade': 3}, # P6
+   {'chegada': 0, 'execucao': 4, 'deadline': 7, 'prioridade': 2}, # P1
+   {'chegada': 2, 'execucao': 2, 'deadline': 5, 'prioridade': 1}, # P2
+   {'chegada': 4, 'execucao': 1, 'deadline': 8, 'prioridade': 3}, # P3
+   {'chegada': 6, 'execucao': 3, 'deadline': 10, 'prioridade': 1}, # P4
+   {'chegada': 8, 'execucao': 3, 'deadline': 15, 'prioridade': 2}, # P5
+   {'chegada': 10, 'execucao': 4, 'deadline': 25, 'prioridade': 3}, # P6
 ]
 
 for i, tab in enumerate(tabs):

@@ -6,8 +6,6 @@ from ..processo import Processo
 class EscalonadorFIFO(EscalonadorBase):
     def adicionar_processo(self, processo: Processo, tempo_atual: int):
         """
-        Adiciona um processo ao final da fila de prontos.
-
         Args:
             processo (Processo)
             tempo_atual (int)
