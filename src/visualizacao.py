@@ -9,7 +9,8 @@ CORES_MAP = {
     'sobrecarga': 'red',       
     'estouro': 'gray',       
     'ocioso': 'whitesmoke',   
-    'bloqueado_mem': 'blue'  
+    'bloqueado_mem': 'blue', 
+    'esperando': '#FFBF00' 
 }
 
 def _converter_log_ticks_para_eventos(log_ticks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -133,6 +134,7 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
         mpatches.Patch(color=CORES_MAP['sobrecarga'], label='Sobrecarga'),
         mpatches.Patch(color=CORES_MAP['estouro'], label='Estouro de Deadline'),
         mpatches.Patch(color=CORES_MAP['ocioso'], label='CPU Ociosa', edgecolor='gray'),
+        mpatches.Patch(color=CORES_MAP['esperando'], label='Em espera', edgecolor="#ff9900"),
     ]
     legend_handles = [
         *legend_patches,

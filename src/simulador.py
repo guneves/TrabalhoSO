@@ -88,6 +88,8 @@ class Simulador:
             elif self.cpu_status == "ocioso":
                 self._processar_ociosidade()
             
+            for processo_pronto in self.escalonador.fila_prontos:
+                self._logar_gantt_evento(processo_pronto.id, "esperando")
             self.tempo_atual += 1
         
         self._calcular_metricas_globais_finais()
