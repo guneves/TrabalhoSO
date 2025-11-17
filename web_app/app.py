@@ -17,7 +17,6 @@ try:
         EscalonadorEDF,
         EscalonadorCFSSim
     )
-    # Importa as funções refatoradas
     from src.visualizacao import gerar_gantt
     from src.metricas import gerar_dataframe_metricas, gerar_dict_resumo
 
@@ -26,12 +25,9 @@ except ImportError as e:
     st.error("Verifique se a estrutura de pastas está correta e se 'src/__init__.py' existe.")
     st.stop()
 
-# Interface do Usuário
 
 st.set_page_config(layout="wide")
 st.title('Simulador de Escalonamento de Processos')
-
-# Global configs
 
 st.subheader('Configurações Globais da Simulação')
 
@@ -61,22 +57,21 @@ with col_s:
 
 st.markdown("---")
 
-# Processos
 st.subheader('Definição dos Processos')
 
 processos_input = []
-num_processos = 6 # Seu requisito de 6 boxes
+num_processos = 6 
 
 tab_nomes = [f'Processo {i+1}' for i in range(num_processos)]
 tabs = st.tabs(tab_nomes)
 
 defaults = [
-    {'chegada': 0, 'execucao': 5, 'deadline': 8, 'prioridade': 2}, # P1
-    {'chegada': 1, 'execucao': 4, 'deadline': 12, 'prioridade': 1}, # P2
-    {'chegada': 3, 'execucao': 2, 'deadline': 20, 'prioridade': 3}, # P3
-    {'chegada': 5, 'execucao': 6, 'deadline': 22, 'prioridade': 1}, # P4
-    {'chegada': 6, 'execucao': 3, 'deadline': 15, 'prioridade': 2}, # P5
-    {'chegada': 8, 'execucao': 4, 'deadline': 25, 'prioridade': 3}, # P6
+    {'chegada': 0, 'execucao': 4, 'deadline': 7, 'prioridade': 2}, # P1
+    {'chegada': 2, 'execucao': 2, 'deadline': 5, 'prioridade': 1}, # P2
+    {'chegada': 4, 'execucao': 1, 'deadline': 8, 'prioridade': 3}, # P3
+    {'chegada': 6, 'execucao': 3, 'deadline': 10, 'prioridade': 1}, # P4
+    {'chegada': 8, 'execucao': 3, 'deadline': 15, 'prioridade': 2}, # P5
+    {'chegada': 10, 'execucao': 4, 'deadline': 25, 'prioridade': 3}, # P6
 ]
 
 for i, tab in enumerate(tabs):
@@ -113,7 +108,6 @@ for i, tab in enumerate(tabs):
 
 st.markdown("---")
 
-# Execução
 st.subheader('Executar Simulação e Ver Resultados')
 
 if st.button('Executar Simulação', type="primary"):
@@ -123,7 +117,6 @@ if st.button('Executar Simulação', type="primary"):
     else:
         with st.spinner('Simulando...'):
             try:
-                # Esta linha agora recebe o deadline já somado (relativo -> absoluto)
                 lista_processos = [Processo(**p) for p in processos_input]
                 
                 algoritmos_map = {
