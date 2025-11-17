@@ -76,7 +76,6 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
     eventos_agrupados = _converter_log_ticks_para_eventos(log_ticks)
     if not eventos_agrupados:
         print("Aviso: Nenhum evento para plotar no gráfico de Gantt.")
-        # Retorna uma figura vazia em caso de falha
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, 'Nenhum dado para exibir.', horizontalalignment='center', verticalalignment='center')
         return fig
