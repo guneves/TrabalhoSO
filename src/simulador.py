@@ -139,8 +139,8 @@ class Simulador:
         """
         processo.status = "terminado"
         processo.tempo_termino = self.tempo_atual
-        processo.calcular_metricas_finais()
-        
+        processo.calcular_metricas_finais(custo_sobrecarga=self.sobrecarga_contexto) 
+               
         self.processos_finalizados.append(processo)
         
         # Inicia a troca, marcando 'preemptado=False' (sem sobrecarga)
@@ -155,6 +155,8 @@ class Simulador:
         if preemptado:
             # Se foi preempção, devolve o processo para a fila
             processo_saindo.status = "pronto"
+            processo_saindo.num_preempcoes += 1
+
             self.escalonador.adicionar_processo(processo_saindo, self.tempo_atual)
 
         self.processo_executando = None

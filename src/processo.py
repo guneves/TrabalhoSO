@@ -26,7 +26,8 @@ class Processo:
 
         self.tempo_restante: int = self.execucao
         self.status: str = "pronto"  
-        self.vruntime: float = 0.0          
+        self.vruntime: float = 0.0      
+        self.num_preempcoes: int = 0    
 
         # Atributos de Estado de Memória (Bônus)
         self.page_faults: int = 0 
@@ -39,7 +40,7 @@ class Processo:
         self.tempo_espera: Optional[int] = None
         self.deadline_ok: Optional[bool] = None
 
-    def calcular_metricas_finais(self):
+    def calcular_metricas_finais(self, custo_sobrecarga: int = 0) -> None:
         """
         Calcula as métricas de desempenho do processo.
         """
@@ -48,8 +49,10 @@ class Processo:
             return
 
         self.turnaround = self.tempo_termino - self.chegada
+
+        sobrecarga_total = self.num_preempcoes * custo_sobrecarga
         
-        self.tempo_espera = (self.turnaround + 1 ) - self.execucao
+        self.tempo_espera = (self.turnaround + 1) - self.execucao - sobrecarga_total
         
         self.deadline_ok = self.tempo_termino <= self.deadline
 
