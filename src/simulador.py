@@ -41,6 +41,7 @@ class Simulador:
         # "ocioso", "executando", "sobrecarga", "bloqueado_mem"
         self.cpu_status: str = "ocioso" 
         self.tempo_sobrecarga_restante: int = 0
+        self.processo_em_sobrecarga: Optional[Processo] = None
         self.tempo_execucao_fatia_atual: int = 0
 
         self.processo_executando: Optional[Processo] = None
@@ -69,6 +70,11 @@ class Simulador:
                self.cpu_status in ["sobrecarga", "bloqueado_mem"]): # <-- Ajustado
             
             self._processar_chegadas()
+
+            for p in self.escalonador.fila_prontos:
+                if p == self.processo_em_sobrecarga:
+                    continue
+                self._logar_gantt_evento(p.id, "esperando")
 
             if self.cpu_status == "executando":
                 self._processar_execucao()
@@ -140,7 +146,7 @@ class Simulador:
         processo.status = "terminado"
         processo.tempo_termino = self.tempo_atual
         processo.calcular_metricas_finais(custo_sobrecarga=self.sobrecarga_contexto) 
-               
+
         self.processos_finalizados.append(processo)
         
         # Inicia a troca, marcando 'preemptado=False' (sem sobrecarga)
@@ -169,6 +175,7 @@ class Simulador:
         if self.sobrecarga_contexto > 0 and preemptado:
             self.cpu_status = "sobrecarga"
             self.tempo_sobrecarga_restante = self.sobrecarga_contexto
+            self.processo_em_sobrecarga = processo_saindo
         else:
             self.cpu_status = "ocioso"
 
@@ -244,7 +251,8 @@ class Simulador:
 
         if self.tempo_sobrecarga_restante == 0:
             self.cpu_status = "ocioso"
-            
+            self.processo_em_sobrecarga = None
+
     def _processar_bloqueio_mem(self):
         """
         Estado 4: Processo está bloqueado esperando I/O de disco (Page Fault).

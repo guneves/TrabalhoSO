@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from typing import List, Dict, Any
 import math
+from collections import defaultdict
 
 from .processo import Processo
 
@@ -22,39 +23,71 @@ NUM_FRAMES = 50
 
 def _converter_log_ticks_para_eventos(log_ticks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Função-ponte para converter o log de ticks do simulador
-    em um log de eventos agrupados.
+    Converte o log de ticks em eventos (barras do gráfico),
+    agrupando processamento por ID para suportar eventos simultâneos
+    (ex: P1 executando enquanto P2 espera).
     """
     if not log_ticks:
         return []
 
-    eventos_agrupados = []
-    evento_atual = None
-
+    # 1. Separar a linha do tempo de cada processo (e da CPU)
+    timeline_por_id = defaultdict(list)
     for tick_info in log_ticks:
-        tick = tick_info['tick']
         id_proc = tick_info['id']
-        status = tick_info['status']
-        
-        # Mapeamento de status para tipo de evento
-        if status in ['executando', 'bloqueado_mem']:
-            tipo = 'execucao' if status == 'executando' else 'bloqueado_mem'
-        else:
-            tipo = status 
+        # Armazena tupla (tick, status)
+        timeline_por_id[id_proc].append((tick_info['tick'], tick_info['status']))
 
-        if evento_atual is None:
-            evento_atual = {'id': id_proc, 'inicio': tick, 'tipo': tipo}
-        
-        elif id_proc != evento_atual['id'] or tipo != evento_atual['tipo']:
-            evento_atual['fim'] = tick 
-            eventos_agrupados.append(evento_atual)
-            evento_atual = {'id': id_proc, 'inicio': tick, 'tipo': tipo}
+    eventos_finais = []
+
+    # 2. Processar cada linha do tempo individualmente para criar os blocos
+    for id_proc, timeline in timeline_por_id.items():
+        if not timeline:
+            continue
             
-    if evento_atual:
-        evento_atual['fim'] = log_ticks[-1]['tick'] + 1
-        eventos_agrupados.append(evento_atual)
+        # Ordena por tick para garantir sequência (caso o log venha desordenado)
+        timeline.sort(key=lambda x: x[0])
+        
+        # Inicia o primeiro evento
+        tick_inicial, status_atual = timeline[0]
+        tick_anterior = tick_inicial
+        
+        # Mapeia status para tipo (igual ao código original)
+        tipo_atual = status_atual
+        if status_atual == 'executando': tipo_atual = 'execucao'
+        elif status_atual == 'bloqueado_mem': tipo_atual = 'bloqueado_mem'
+        
+        inicio_evento = tick_inicial
 
-    return eventos_agrupados
+        for tick, status in timeline[1:]:
+            tipo_novo = status
+            if status == 'executando': tipo_novo = 'execucao'
+            elif status == 'bloqueado_mem': tipo_novo = 'bloqueado_mem'
+            
+            # Se mudou o status OU houve um "buraco" no tempo (tick não consecutivo)
+            if tipo_novo != tipo_atual or tick != (tick_anterior + 1):
+                # Fecha o evento anterior
+                eventos_finais.append({
+                    'id': id_proc,
+                    'tipo': tipo_atual,
+                    'inicio': inicio_evento,
+                    'fim': tick_anterior + 1 # Fim é exclusivo
+                })
+                
+                # Começa novo evento
+                tipo_atual = tipo_novo
+                inicio_evento = tick
+            
+            tick_anterior = tick
+
+        # Fecha o último evento pendente do loop
+        eventos_finais.append({
+            'id': id_proc,
+            'tipo': tipo_atual,
+            'inicio': inicio_evento,
+            'fim': tick_anterior + 1
+        })
+
+    return eventos_finais
 
 
 def gerar_gantt(log_ticks: List[Dict[str, Any]], 
