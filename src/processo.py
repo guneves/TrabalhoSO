@@ -49,8 +49,7 @@ class Processo:
 
         self.turnaround = self.tempo_termino - self.chegada
         
-        # O tempo de espera é o tempo total na fila de prontos (turnaround - tempo de execução)
-        self.tempo_espera = (self.turnaround + 1) - self.execucao
+        self.tempo_espera = (self.turnaround + 1 ) - self.execucao
         
         self.deadline_ok = self.tempo_termino <= self.deadline
 
