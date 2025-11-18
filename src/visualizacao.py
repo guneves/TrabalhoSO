@@ -226,7 +226,6 @@ def gerar_visualizacao_tabela_invertida(status_memoria: Dict[str, Any]):
     Gera uma representação visual da Tabela de Páginas Invertida.
     """
     fig, ax = plt.subplots(figsize=(4, 8))
-    ax.set_title("Tabela de Páginas Invertida\n(Frame -> PID:Página)", fontsize=10)
     ax.axis('off')
 
     tabela_dados = status_memoria['tabela_invertida']
@@ -249,7 +248,7 @@ def gerar_visualizacao_tabela_invertida(status_memoria: Dict[str, Any]):
         all_frames.append([str(i), pid_page, bit])
 
     # Limitar a exibição para clareza (exibir os 12 primeiros)
-    frames_a_exibir = 12 
+    frames_a_exibir = 50
     cell_text_exibir = all_frames[:frames_a_exibir]
     
     # Adicionar reticências se houver mais frames
