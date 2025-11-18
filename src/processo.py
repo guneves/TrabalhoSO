@@ -1,15 +1,10 @@
+# processo.py
 import math
 from typing import Optional
 
 class Processo:
     """
     Representa um único processo no simulador.
-
-    Esta classe armazena todos os atributos definidos no documento do trabalho,
-    incluindo:
-    1. Atributos de Entrada: Lidos do JSON (id, chegada, execucao, etc.)
-    2. Atributos de Estado: Usados pelo simulador (tempo_restante, status, etc.)
-    3. Atributos de Métrica: Calculados ao final da simulação (turnaround, etc.)
     """
     
     def __init__(self, 
@@ -19,7 +14,7 @@ class Processo:
                  prioridade: int, 
                  deadline: int,          
                  deadline_relativo: int, 
-                 num_paginas: int = 0):
+                 num_paginas: int = 0): # <-- Adição de num_paginas
         
         self.id: str = id
         self.chegada: int = chegada
@@ -33,6 +28,10 @@ class Processo:
         self.status: str = "pronto"  
         self.vruntime: float = 0.0          
 
+        # Atributos de Estado de Memória (Bônus)
+        self.page_faults: int = 0 
+        self.status_memoria: str = "pronto" # Novo estado: "bloqueado_mem"
+
         self.tempo_termino: Optional[int] = None
         self.tempo_primeira_execucao: Optional[int] = None
         
@@ -43,7 +42,6 @@ class Processo:
     def calcular_metricas_finais(self):
         """
         Calcula as métricas de desempenho do processo.
-        Deve ser chamado pelo simulador *após* o processo terminar.
         """
         if self.tempo_termino is None:
             print(f"ERRO: Tentando calcular métricas para {self.id} que não terminou.")
@@ -51,7 +49,8 @@ class Processo:
 
         self.turnaround = self.tempo_termino - self.chegada
         
-        self.tempo_espera = (self.turnaround + 1 ) - self.execucao
+        # O tempo de espera é o tempo total na fila de prontos (turnaround - tempo de execução)
+        self.tempo_espera = (self.turnaround + 1) - self.execucao
         
         self.deadline_ok = self.tempo_termino <= self.deadline
 
@@ -61,4 +60,5 @@ class Processo:
                 f"exec={self.execucao}, "
                 f"restante={self.tempo_restante}, "
                 f"deadline={self.deadline}, "
-                f"status='{self.status}')")
+                f"status='{self.status}', "
+                f"pages={self.num_paginas})")
