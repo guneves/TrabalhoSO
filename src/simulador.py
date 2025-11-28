@@ -1,5 +1,5 @@
-# simulador.py
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any, Tuple, Callable
+import time
 from .escalonadores import (
     EscalonadorBase, 
     EscalonadorRoundRobin, 
@@ -7,7 +7,7 @@ from .escalonadores import (
     EscalonadorCFSSim
 )
 from .processo import Processo
-from .memoria import GerenciadorMemoria # <-- Adicionado
+from .memoria import GerenciadorMemoria
 
 ALGORITMOS_PREEMPTIVOS = (EscalonadorRoundRobin, EscalonadorEDF, EscalonadorCFSSim)
 
@@ -56,10 +56,10 @@ class Simulador:
             "total_preempcoes": 0,
             "tempo_total_ocioso": 0,
             "tempo_total_sobrecarga": 0,
-            "tempo_total_bloqueio_mem": 0, # <-- Adicionado
+            "tempo_total_bloqueio_mem": 0,
         }
 
-    def executar(self) -> Dict[str, Any]:
+    def executar(self, on_tick: Optional[Callable[[Dict[str, Any]], None]] = None, tick_delay: float = 0.0) -> Dict[str, Any]:
         """
         Inicia e executa o loop principal da simulação.
         """
@@ -67,7 +67,7 @@ class Simulador:
         while (self.processos_nao_chegaram or
                self.escalonador.fila_prontos or
                self.processo_executando or
-               self.cpu_status in ["sobrecarga", "bloqueado_mem"]): # <-- Ajustado
+               self.cpu_status in ["sobrecarga", "bloqueado_mem"]):
             
             self._processar_chegadas()
 
@@ -80,11 +80,32 @@ class Simulador:
                 self._processar_execucao()
             elif self.cpu_status == "sobrecarga":
                 self._processar_sobrecarga()
-            elif self.cpu_status == "bloqueado_mem": # <-- Novo estado
+            elif self.cpu_status == "bloqueado_mem":
                 self._processar_bloqueio_mem()
             elif self.cpu_status == "ocioso":
                 self._processar_ociosidade()
             
+            snapshot = {
+                'tick': self.tempo_atual,
+                'cpu_status': self.cpu_status,
+                'processo_executando': self.processo_executando.id if self.processo_executando else None,
+                'fila_prontos': [p.id for p in self.escalonador.fila_prontos],
+                'processos_terminados': [p.id for p in self.processos_finalizados],
+                'log_gantt': list(self.log_gantt_ticks),
+                'metricas_globais': dict(self.metricas_globais),
+                'status_memoria': self.gerenciador_memoria.obter_status_memoria_para_visualizacao() if self.gerenciador_memoria else {}
+            }
+
+            if on_tick:
+                try:
+                    on_tick(snapshot)
+                except Exception:
+                    pass
+
+            # velocidade de atualização
+            if on_tick and tick_delay and tick_delay > 0:
+                time.sleep(tick_delay)
+
             self.tempo_atual += 1
         
         self._calcular_metricas_globais_finais()
@@ -203,7 +224,7 @@ class Simulador:
             
         processo = self.processo_executando
         
-        # --- Lógica de Page Fault (Bônus) ---
+        # Page Fault
         if self.gerenciador_memoria and processo.num_paginas > 0:
             page_fault = self.gerenciador_memoria.gerar_requisicao_pagina(processo, self.tempo_atual)
             
