@@ -189,56 +189,117 @@ if st.button('Executar Simulação', type="primary"):
                     gerenciador_memoria=gerenciador_memoria,
                     custo_disco=custo_disco if ativar_memoria else 0
                 )
-                
-                resultados = simulador.executar()
+                # Placeholders para atualizações dinâmicas por tick
+                st.header("Gráfico de Gantt (Atualizando)")
+                placeholder_gantt = st.empty()
 
+                col_tabela, col_resumo = st.columns(2)
+                with col_tabela:
+                    st.header("Status da Simulação (Tempo Real)")
+                    placeholder_status = st.empty()
+                with col_resumo:
+                    st.header("Resumo Parcial")
+                    placeholder_resumo = st.empty()
+
+                # Placeholders de memória (se ativado)
+                if ativar_memoria:
+                    st.header("Visualização de Memória Virtual (Atualizando)")
+                    col_ram, col_disco, col_tabela_paginas = st.columns(3)
+                    with col_ram:
+                        st.subheader("Memória RAM (Frames)")
+                        placeholder_ram = st.empty()
+                    with col_disco:
+                        st.subheader("Disco")
+                        placeholder_disco = st.empty()
+                    with col_tabela_paginas:
+                        st.subheader("Tabela de Páginas Invertida")
+                        placeholder_tabela_paginas = st.empty()
+
+                # Callback chamado a cada tick pelo Simulador
+                def on_tick(snapshot):
+                    try:
+                        # Gera Gantt com o log acumulado até o momento
+                        fig_gantt = gerar_gantt(snapshot['log_gantt'], lista_processos, "", algoritmo_nome)
+                        placeholder_gantt.pyplot(fig_gantt)
+
+                        # Texto de status simples
+                        cpu = snapshot.get('cpu_status')
+                        exec_id = snapshot.get('processo_executando')
+                        fila = snapshot.get('fila_prontos', [])
+                        tick = snapshot.get('tick')
+
+                        status_md = (
+                            f"**Tick:** {tick}  \n"
+                            f"**CPU status:** {cpu}  \n"
+                            f"**Executando:** {exec_id}  \n"
+                            f"**Fila de Prontos (tamanho):** {len(fila)}"
+                        )
+                        placeholder_status.markdown(status_md)
+
+                        # Resumo parcial
+                        resumo_parcial = {
+                            'Tick': tick,
+                            'CPU': cpu,
+                            'Executando': exec_id,
+                            'Prontos': len(fila),
+                        }
+                        placeholder_resumo.json(resumo_parcial)
+
+                        # Atualiza visualizações de memória, quando houver
+                        if ativar_memoria and snapshot.get('status_memoria'):
+                            sm = snapshot['status_memoria']
+                            fig_ram = gerar_visualizacao_memoria_ram(sm)
+                            placeholder_ram.pyplot(fig_ram)
+
+                            fig_disco = gerar_visualizacao_disco()
+                            placeholder_disco.pyplot(fig_disco)
+
+                            fig_tab = gerar_visualizacao_tabela_invertida(sm)
+                            placeholder_tabela_paginas.pyplot(fig_tab)
+                    except Exception as e:
+                        # Não quebrar a simulação por erros de renderização
+                        pass
+
+                resultados = simulador.executar(on_tick=on_tick, tick_delay=0.25)
+
+                # Após término, exibe resultado final (substitui os placeholders finais)
                 log_ticks = resultados['log_gantt']
                 processos_finalizados = resultados['processos_terminados']
                 metricas_globais = resultados['metricas_globais']
                 status_memoria = resultados.get('status_memoria', {}) 
 
-                
-                # Exibir Gantt
-                st.header("Gráfico de Gantt")
+                # Substituir Gantt final
                 figura_gantt = gerar_gantt(log_ticks, processos_finalizados, "", algoritmo_nome)
-                st.pyplot(figura_gantt)
-                
-                # Exibir Tabela e Resumo lado a lado
-                col_tabela, col_resumo = st.columns(2)
-                
+                placeholder_gantt.pyplot(figura_gantt)
+
+                # Tabela final e resumo
                 with col_tabela:
                     st.header("Tabela Final de Processos")
                     df_metricas = gerar_dataframe_metricas(processos_finalizados)
                     st.dataframe(df_metricas, hide_index=True)
-                
+
                 with col_resumo:
-                    st.header("Resumo Quantitativo")
+                    st.header("Resumo Quantitativo Final")
                     dict_resumo = gerar_dict_resumo(metricas_globais, processos_finalizados)
-                    # Adiciona métricas de memória ao resumo
                     if ativar_memoria and gerenciador_memoria:
                         dict_resumo["Total de Page Faults (Global)"] = status_memoria.get("total_page_faults", 0)
                         dict_resumo["Política de Substituição"] = politica_memoria
                     st.json(dict_resumo)
-                    
-                # Exibir Visualizações de Memória se ativas
+
+                # Visualizações finais de memória
                 if ativar_memoria and status_memoria:
-                    st.header("Visualização de Memória Virtual (Bônus)")
-                    col_ram, col_disco, col_tabela_paginas = st.columns(3) # 3 colunas agora
-                    
-                    with col_ram:
-                        st.subheader("Memória RAM (Frames)")
-                        figura_ram = gerar_visualizacao_memoria_ram(status_memoria)
-                        st.pyplot(figura_ram)
-                        
-                    with col_disco:
-                        st.subheader("Disco")
-                        figura_disco = gerar_visualizacao_disco() # <-- Novo
-                        st.pyplot(figura_disco)
-                        
-                    with col_tabela_paginas:
-                        st.subheader("Tabela de Páginas Invertida")
-                        figura_tabela = gerar_visualizacao_tabela_invertida(status_memoria)
-                        st.pyplot(figura_tabela)
+                    with st.container():
+                        st.header("Visualização de Memória Virtual (Final)")
+                        col_ram_f, col_disco_f, col_tabela_f = st.columns(3)
+                        with col_ram_f:
+                            fig_ram = gerar_visualizacao_memoria_ram(status_memoria)
+                            st.pyplot(fig_ram)
+                        with col_disco_f:
+                            fig_disco = gerar_visualizacao_disco()
+                            st.pyplot(fig_disco)
+                        with col_tabela_f:
+                            fig_tab = gerar_visualizacao_tabela_invertida(status_memoria)
+                            st.pyplot(fig_tab)
 
 
             except Exception as e:
