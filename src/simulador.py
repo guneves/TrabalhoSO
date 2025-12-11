@@ -178,7 +178,6 @@ class Simulador:
         """
         
         if preemptado:
-            # Se foi preempção, devolve o processo para a fila
             processo_saindo.status = "pronto"
             processo_saindo.num_preempcoes += 1
 
