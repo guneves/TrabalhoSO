@@ -135,19 +135,18 @@ class Simulador:
             if isinstance(self.escalonador, EscalonadorCFSSim):
                 self.escalonador.inicializar_vruntime_chegada(novo_processo, self.tempo_atual)
 
+            self.escalonador.adicionar_processo(novo_processo, self.tempo_atual)
+            
             deve_preemptar = False
             if self.processo_executando:
                 deve_preemptar = self.escalonador.verificar_preempcao(
                     self.processo_executando, novo_processo, self.tempo_atual
-                ) 
+                )
+                if deve_preemptar:
+                    self.metricas_globais["total_preempcoes"] += 1
+                    self._iniciar_troca_contexto(processo_saindo=self.processo_executando, 
+                                                preemptado=True)
 
-            self.escalonador.adicionar_processo(novo_processo, self.tempo_atual)
-
-            if deve_preemptar:
-                # Preempção por evento (ex: EDF, CFS)
-                self.metricas_globais["total_preempcoes"] += 1
-                self._iniciar_troca_contexto(processo_saindo=self.processo_executando, 
-                                            preemptado=True)
 
     def _preemptar_por_quantum(self):
         """
