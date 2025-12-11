@@ -110,12 +110,12 @@ tabs = st.tabs(tab_nomes)
 
 # Defaults com 'num_paginas'
 defaults = [
-   {'chegada': 0, 'execucao': 4, 'deadline': 7, 'prioridade': 2, 'num_paginas': 6}, # P1
-   {'chegada': 2, 'execucao': 2, 'deadline': 5, 'prioridade': 1, 'num_paginas': 4}, # P2
-   {'chegada': 4, 'execucao': 1, 'deadline': 8, 'prioridade': 3, 'num_paginas': 3}, # P3
-   {'chegada': 6, 'execucao': 3, 'deadline': 10, 'prioridade': 1, 'num_paginas': 5}, # P4
-   {'chegada': 8, 'execucao': 3, 'deadline': 15, 'prioridade': 2, 'num_paginas': 2}, # P5
-   {'chegada': 10, 'execucao': 4, 'deadline': 25, 'prioridade': 3, 'num_paginas': 7}, # P6
+   {'chegada': 0, 'execucao': 4, 'deadline': 7, 'prioridade': 2, 'num_paginas': 1}, # P1
+   {'chegada': 2, 'execucao': 2, 'deadline': 5, 'prioridade': 1, 'num_paginas': 1}, # P2
+   {'chegada': 4, 'execucao': 1, 'deadline': 8, 'prioridade': 3, 'num_paginas': 1}, # P3
+   {'chegada': 6, 'execucao': 3, 'deadline': 10, 'prioridade': 1, 'num_paginas': 1}, # P4
+   {'chegada': 8, 'execucao': 3, 'deadline': 15, 'prioridade': 2, 'num_paginas': 1}, # P5
+   {'chegada': 10, 'execucao': 4, 'deadline': 25, 'prioridade': 3, 'num_paginas': 1}, # P6
 ]
 
 for i, tab in enumerate(tabs):
@@ -124,7 +124,7 @@ for i, tab in enumerate(tabs):
         
         ativar_processo = st.checkbox(
             f'Ativar Processo {id_proc}', 
-            value=(i < 3)
+            value=(i < 4)
         )
         
         col1, col2, col3, col4, col5 = st.columns(5) # 5 colunas agora
