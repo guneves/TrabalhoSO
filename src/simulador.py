@@ -145,8 +145,7 @@ class Simulador:
                 if deve_preemptar:
                     self.metricas_globais["total_preempcoes"] += 1
                     self._iniciar_troca_contexto(processo_saindo=self.processo_executando, 
-                                                preemptado=True)
-
+                                            preemptado=True)
 
     def _preemptar_por_quantum(self):
         """
