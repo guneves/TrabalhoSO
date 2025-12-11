@@ -129,7 +129,7 @@ for i, tab in enumerate(tabs):
         
         col1, col2, col3, col4, col5 = st.columns(5) # 5 colunas agora
         
-        default_val = defaults[i] if i < len(defaults) else {'chegada': i*2, 'execucao': 5, 'deadline': 20, 'prioridade': 1, 'num_paginas': 0}
+        default_val = defaults[i] if i < len(defaults) else {'chegada': i*2, 'execucao': 5, 'deadline': 20, 'prioridade': 1, 'num_paginas': 1}
         
         chegada = col1.number_input(f'Tempo de Chegada ({id_proc})', 
                                     min_value=0, value=default_val['chegada'], key=f'ch_{i}')
