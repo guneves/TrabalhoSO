@@ -108,7 +108,6 @@ num_processos = 6
 tab_nomes = [f'Processo {i+1}' for i in range(num_processos)]
 tabs = st.tabs(tab_nomes)
 
-# Defaults com 'num_paginas'
 defaults = [
    {'chegada': 0, 'execucao': 4, 'deadline': 7, 'prioridade': 2, 'num_paginas': 1}, # P1
    {'chegada': 2, 'execucao': 2, 'deadline': 5, 'prioridade': 1, 'num_paginas': 1}, # P2
@@ -176,7 +175,6 @@ if st.button('Executar Simulação', type="primary"):
                 escalonador_class = algoritmos_map[algoritmo_nome]
                 escalonador = escalonador_class()
                 
-                # Inicializa o Gerenciador de Memória se estiver ativo
                 gerenciador_memoria = None
                 if ativar_memoria:
                     gerenciador_memoria = GerenciadorMemoria(politica=politica_memoria, seed=seed_memoria)
@@ -189,7 +187,6 @@ if st.button('Executar Simulação', type="primary"):
                     gerenciador_memoria=gerenciador_memoria,
                     custo_disco=custo_disco if ativar_memoria else 0
                 )
-                # Placeholders para atualizações dinâmicas por tick
                 st.header("Gráfico de Gantt (Atualizando)")
                 placeholder_gantt = st.empty()
 
@@ -201,7 +198,6 @@ if st.button('Executar Simulação', type="primary"):
                     st.header("Resumo Parcial")
                     placeholder_resumo = st.empty()
 
-                # Placeholders de memória (se ativado)
                 if ativar_memoria:
                     st.header("Visualização de Memória Virtual (Atualizando)")
                     col_ram, col_disco, col_tabela_paginas = st.columns(3)
@@ -215,10 +211,8 @@ if st.button('Executar Simulação', type="primary"):
                         st.subheader("Tabela de Páginas Invertida")
                         placeholder_tabela_paginas = st.empty()
 
-                # Callback chamado a cada tick pelo Simulador
                 def on_tick(snapshot):
                     try:
-                        # Gera Gantt com o log acumulado até o momento
                         fig_gantt = gerar_gantt(snapshot['log_gantt'], lista_processos, "", algoritmo_nome)
                         placeholder_gantt.pyplot(fig_gantt)
 
@@ -236,7 +230,6 @@ if st.button('Executar Simulação', type="primary"):
                         )
                         placeholder_status.markdown(status_md)
 
-                        # Resumo parcial
                         resumo_parcial = {
                             'Tick': tick,
                             'CPU': cpu,
@@ -245,7 +238,6 @@ if st.button('Executar Simulação', type="primary"):
                         }
                         placeholder_resumo.json(resumo_parcial)
 
-                        # Atualiza visualizações de memória, quando houver
                         if ativar_memoria and snapshot.get('status_memoria'):
                             sm = snapshot['status_memoria']
                             fig_ram = gerar_visualizacao_memoria_ram(sm)
@@ -257,22 +249,18 @@ if st.button('Executar Simulação', type="primary"):
                             fig_tab = gerar_visualizacao_tabela_invertida(sm)
                             placeholder_tabela_paginas.pyplot(fig_tab)
                     except Exception as e:
-                        # Não quebrar a simulação por erros de renderização
                         pass
 
                 resultados = simulador.executar(on_tick=on_tick, tick_delay=0.25)
 
-                # Após término, exibe resultado final (substitui os placeholders finais)
                 log_ticks = resultados['log_gantt']
                 processos_finalizados = resultados['processos_terminados']
                 metricas_globais = resultados['metricas_globais']
                 status_memoria = resultados.get('status_memoria', {}) 
 
-                # Substituir Gantt final
                 figura_gantt = gerar_gantt(log_ticks, processos_finalizados, "", algoritmo_nome)
                 placeholder_gantt.pyplot(figura_gantt)
 
-                # Tabela final e resumo
                 with col_tabela:
                     st.header("Tabela Final de Processos")
                     df_metricas = gerar_dataframe_metricas(processos_finalizados)
@@ -286,7 +274,6 @@ if st.button('Executar Simulação', type="primary"):
                         dict_resumo["Política de Substituição"] = politica_memoria
                     st.json(dict_resumo)
 
-                # Visualizações finais de memória
                 if ativar_memoria and status_memoria:
                     with st.container():
                         st.header("Visualização de Memória Virtual (Final)")

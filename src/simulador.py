@@ -29,7 +29,6 @@ class Simulador:
         self.sobrecarga_contexto = sobrecarga_contexto
         self.quantum = quantum
         
-        # Parâmetros de Memória (Bônus)
         self.gerenciador_memoria = gerenciador_memoria
         self.custo_disco = custo_disco
         self.processo_bloqueado_mem: Optional[Processo] = None
@@ -110,14 +109,13 @@ class Simulador:
         
         self._calcular_metricas_globais_finais()
         
-        # Coleta dados de memória para o Streamlit
         mem_status = self.gerenciador_memoria.obter_status_memoria_para_visualizacao() if self.gerenciador_memoria else {}
 
         return {
             "log_gantt": self.log_gantt_ticks,
             "processos_terminados": self.processos_finalizados,
             "metricas_globais": self.metricas_globais,
-            "status_memoria": mem_status # <-- Adicionado
+            "status_memoria": mem_status 
         }
 
 
@@ -131,7 +129,6 @@ class Simulador:
             novo_processo = self.processos_nao_chegaram.pop(0)
             novo_processo.status = "pronto"
             
-            # CFS-Sim: Inicializa vruntime para o novo processo
             if isinstance(self.escalonador, EscalonadorCFSSim):
                 self.escalonador.inicializar_vruntime_chegada(novo_processo, self.tempo_atual)
 
@@ -168,7 +165,6 @@ class Simulador:
 
         self.processos_finalizados.append(processo)
         
-        # Inicia a troca, marcando 'preemptado=False' (sem sobrecarga)
         self._iniciar_troca_contexto(processo_saindo=processo, 
                                     preemptado=False)
 
@@ -185,11 +181,9 @@ class Simulador:
 
         self.processo_executando = None
         
-        # Evita contar troca de contexto se o simulador estava em bloqueio de memória
         if self.cpu_status != "bloqueado_mem":
             self.metricas_globais["total_trocas_contexto"] += 1
         
-        # Aplica sobrecarga apenas se a troca foi causada por PREEMPÇÃO e sobrecarga > 0
         if self.sobrecarga_contexto > 0 and preemptado:
             self.cpu_status = "sobrecarga"
             self.tempo_sobrecarga_restante = self.sobrecarga_contexto
@@ -221,26 +215,21 @@ class Simulador:
             
         processo = self.processo_executando
         
-        # Page Fault
         if self.gerenciador_memoria and processo.num_paginas > 0:
             page_fault = self.gerenciador_memoria.gerar_requisicao_pagina(processo, self.tempo_atual)
             
             if page_fault == 1 and self.custo_disco > 0:
-                # Page Fault ocorreu e há custo de bloqueio.
                 processo.status = "bloqueado_mem"
                 self.cpu_status = "bloqueado_mem"
                 self.processo_bloqueado_mem = processo
                 self.tempo_bloqueio_restante = self.custo_disco
                 self.processo_executando = None # Libera CPU
                 
-                # O bloqueio é uma interrupção, não uma preempção de escalonador, mas libera CPU.
-                # Não inicia troca de contexto, apenas muda o estado da CPU.
                 self._logar_gantt_evento(processo.id, "bloqueado_mem")
-                return # Pula o tick de execução do processo
+                return #
 
         self._logar_gantt_evento(processo.id, "executando")
-
-        # Lógica Específica do CFS-Sim
+#
         if isinstance(self.escalonador, EscalonadorCFSSim):
             self.escalonador.atualizar_vruntime_processo_executando(processo, 1)
 
@@ -280,8 +269,7 @@ class Simulador:
             self.cpu_status = "ocioso"
             return
             
-        # O log de Gantt deve mostrar que a CPU está bloqueada POR um processo
-        # Ocioso/Bloqueado na linha do processo, e ocioso na linha da CPU
+        
         self._logar_gantt_evento(self.processo_bloqueado_mem.id, "bloqueado_mem")
         
         self.metricas_globais["tempo_total_bloqueio_mem"] += 1
@@ -289,12 +277,11 @@ class Simulador:
         self.tempo_bloqueio_restante -= 1
 
         if self.tempo_bloqueio_restante == 0:
-            # Bloqueio terminou, processo volta à fila de prontos
             self.processo_bloqueado_mem.status = "pronto"
             self.escalonador.adicionar_processo(self.processo_bloqueado_mem, self.tempo_atual)
             
             self.processo_bloqueado_mem = None
-            self.cpu_status = "ocioso" # Volta ao estado ocioso para buscar o próximo
+            self.cpu_status = "ocioso" 
 
     def _processar_ociosidade(self):
         """
@@ -305,7 +292,6 @@ class Simulador:
         if proximo_processo:
             self._iniciar_execucao(proximo_processo)
             
-            # Processa o primeiro tick imediatamente
             self._processar_execucao()
         
         else:
@@ -340,7 +326,6 @@ class Simulador:
 
         if tempo_total > 0:
             self.metricas_globais["utilizacao_cpu_percent"] = (tempo_executando / tempo_total) * 100
-            # A ociosidade real da CPU é o tempo ocioso + tempo de bloqueio de memória (esperando I/O)
             self.metricas_globais["ociosidade_cpu_percent"] = (
                 tempo_ocioso_e_bloqueio / tempo_total
             ) * 100

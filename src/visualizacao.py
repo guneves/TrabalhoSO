@@ -1,4 +1,3 @@
-# visualizacao.py
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from typing import List, Dict, Any
@@ -16,7 +15,6 @@ CORES_MAP = {
     'esperando': '#FFBF00' 
 }
 
-# Constantes para visualização de memória
 FRAMES_POR_LINHA = 8 
 NUM_FRAMES = 50 
 
@@ -30,28 +28,22 @@ def _converter_log_ticks_para_eventos(log_ticks: List[Dict[str, Any]]) -> List[D
     if not log_ticks:
         return []
 
-    # 1. Separar a linha do tempo de cada processo (e da CPU)
     timeline_por_id = defaultdict(list)
     for tick_info in log_ticks:
         id_proc = tick_info['id']
-        # Armazena tupla (tick, status)
         timeline_por_id[id_proc].append((tick_info['tick'], tick_info['status']))
 
     eventos_finais = []
 
-    # 2. Processar cada linha do tempo individualmente para criar os blocos
     for id_proc, timeline in timeline_por_id.items():
         if not timeline:
             continue
             
-        # Ordena por tick para garantir sequência (caso o log venha desordenado)
         timeline.sort(key=lambda x: x[0])
         
-        # Inicia o primeiro evento
         tick_inicial, status_atual = timeline[0]
         tick_anterior = tick_inicial
         
-        # Mapeia status para tipo (igual ao código original)
         tipo_atual = status_atual
         if status_atual == 'executando': tipo_atual = 'execucao'
         elif status_atual == 'bloqueado_mem': tipo_atual = 'bloqueado_mem'
@@ -63,23 +55,19 @@ def _converter_log_ticks_para_eventos(log_ticks: List[Dict[str, Any]]) -> List[D
             if status == 'executando': tipo_novo = 'execucao'
             elif status == 'bloqueado_mem': tipo_novo = 'bloqueado_mem'
             
-            # Se mudou o status OU houve um "buraco" no tempo (tick não consecutivo)
             if tipo_novo != tipo_atual or tick != (tick_anterior + 1):
-                # Fecha o evento anterior
                 eventos_finais.append({
                     'id': id_proc,
                     'tipo': tipo_atual,
                     'inicio': inicio_evento,
-                    'fim': tick_anterior + 1 # Fim é exclusivo
+                    'fim': tick_anterior + 1 
                 })
                 
-                # Começa novo evento
                 tipo_atual = tipo_novo
                 inicio_evento = tick
             
             tick_anterior = tick
 
-        # Fecha o último evento pendente do loop
         eventos_finais.append({
             'id': id_proc,
             'tipo': tipo_atual,
@@ -134,7 +122,6 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
             pos_y_atual = y_pos[id_proc]
             cor = CORES_MAP.get(tipo, 'black') 
 
-            # Lógica para cor de Estouros de Deadline
             if tipo == 'execucao' and \
                id_proc in processos_map and \
                processos_map[id_proc].deadline_ok is False:
@@ -148,7 +135,6 @@ def gerar_gantt(log_ticks: List[Dict[str, Any]],
             deadline = proc.deadline
             pos_y_deadline = y_pos[proc.id]
             
-            # Linha vertical para o deadline
             ax.vlines(x=deadline, ymin=pos_y_deadline - 0.4, ymax=pos_y_deadline + 0.4, 
                       colors='red', linestyles='dashed', lw=2,
                       label='Deadline' if 'deadline' not in ax.get_legend_handles_labels()[1] else "")
@@ -194,24 +180,20 @@ def gerar_visualizacao_memoria_ram(status_memoria: Dict[str, Any]):
     rows = math.ceil(NUM_FRAMES / FRAMES_POR_LINHA)
     cols = FRAMES_POR_LINHA
     
-    # Desenha os frames
     for i, frame in enumerate(frames_data):
         row = i // cols
         col = i % cols
         
-        # Posição do retângulo do frame
         rect = plt.Rectangle((col, rows - 1 - row), 1, 1, 
                              fill=True, 
                              edgecolor='black', 
                              linewidth=1)
                              
         if frame['ocupado']:
-            # Cor com base no PID
             pid_hash = sum(ord(c) for c in frame['processo_id'])
             cor = plt.cm.get_cmap('tab10')(pid_hash % 10)
             rect.set_color(cor)
             
-            # Texto (Frame Index e PID:Página)
             text = f"F{frame['indice']}\n{frame['processo_id']}:p{frame['pagina_num']}"
             ax.text(col + 0.5, rows - 1 - row + 0.5, text, 
                     ha='center', va='center', fontsize=8, color='black', weight='bold')
@@ -236,8 +218,6 @@ def gerar_visualizacao_disco():
     ax.set_title("Disco Rígido (Swapping)")
     ax.axis('off')
     
-    # Desenha o cilindro do disco
-    # Fundo do cilindro
     disk_color = '#e0e0e0'
     ax.add_patch(mpatches.Ellipse((0.5, 0.8), 0.7, 0.2, color=disk_color, edgecolor='black', linewidth=1))
     # Lateral do cilindro
@@ -263,41 +243,32 @@ def gerar_visualizacao_tabela_invertida(status_memoria: Dict[str, Any]):
 
     tabela_dados = status_memoria['tabela_invertida']
     
-    # Configuração da tabela visual
     headers = ["Frame", "PID:Página", "Valid/Inv"]
     cell_text = []
     
-    # Cria uma lista de mapeamentos ordenados por Frame Index
     mapeamentos = {}
     for item in tabela_dados:
-        # Usa um formato conciso para caber na tabela
         mapeamentos[item['frame']] = f"{item['pid']}:p{item['pagina']}" 
     
-    # Obtém todos os frames ocupados e livres até o NUM_FRAMES
     all_frames = []
     for i in range(NUM_FRAMES):
         pid_page = mapeamentos.get(i, "Livre")
         bit = 'V' if pid_page != "Livre" else 'I'
         all_frames.append([str(i), pid_page, bit])
 
-    # Limitar a exibição para clareza (exibir os 12 primeiros)
     frames_a_exibir = 50
     cell_text_exibir = all_frames[:frames_a_exibir]
     
-    # Adicionar reticências se houver mais frames
     if NUM_FRAMES > frames_a_exibir:
         cell_text_exibir.append(["...", "...", "..."])
         cell_colors = [['w'] * 3] * frames_a_exibir + [['lightgray'] * 3]
     else:
         cell_colors = [['w'] * 3] * frames_a_exibir
         
-    # Coloração: frames ocupados em cinza claro para destacar
     for i, row in enumerate(cell_text_exibir):
         if row[2] == 'V':
-            # Cor azul muito claro para frame ocupado
             cell_colors[i] = ['#e6e6ff'] * 3
             
-    # Cria a tabela no Matplotlib
     tabela = ax.table(cellText=cell_text_exibir, colLabels=headers, 
                       loc='center', cellLoc='center', 
                       colWidths=[0.3, 0.4, 0.3],
@@ -306,10 +277,5 @@ def gerar_visualizacao_tabela_invertida(status_memoria: Dict[str, Any]):
     tabela.auto_set_font_size(False)
     tabela.set_fontsize(10)
     tabela.scale(1, 1.2)
-    
-    # [LINHAS REMOVIDAS] Anteriormente, o código tentava usar:
-    # for key, cell in tabela.get_celld().items():
-    #     if key[1] == 2: # Coluna Valid/Invalid
-    #         cell.set_fontweight('bold') 
     
     return fig

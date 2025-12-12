@@ -13,8 +13,16 @@ class EscalonadorCFSSim(EscalonadorBase):
         return math.pow(1.25, (prioridade - 1))
 
     def adicionar_processo(self, processo: Processo, tempo_atual: int):
+        '''
+        Docstring for adicionar_processo
+        
+        :param self: Esse método pertence à classe EscalonadorCFSSim
+        :param processo:
+        :type processo: Processo
+        :param tempo_atual: Description
+        :type tempo_atual: int
+        '''
         if processo.vruntime == 0:
-            # Regra: vruntime = tempo_atual
             processo.vruntime = float(tempo_atual)
         self.fila_prontos.append(processo)
 
@@ -22,7 +30,6 @@ class EscalonadorCFSSim(EscalonadorBase):
         if not self.fila_prontos:
             return None
 
-        # "O próximo processo a executar é o de menor vruntime" [cite: 83]
         processo_escolhido = min(self.fila_prontos, key=lambda p: p.vruntime)
         
         self.fila_prontos.remove(processo_escolhido)
@@ -43,5 +50,4 @@ class EscalonadorCFSSim(EscalonadorBase):
             
         peso = self._calcular_peso(processo.prioridade)
         
-        # Neste simulador, delta_t é sempre 1 (1 tick)
         processo.vruntime += delta_t * peso

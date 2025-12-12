@@ -1,4 +1,3 @@
-# processo.py
 import math
 from typing import Optional
 
@@ -14,7 +13,7 @@ class Processo:
                  prioridade: int, 
                  deadline: int,          
                  deadline_relativo: int, 
-                 num_paginas: int = 0): # <-- Adição de num_paginas
+                 num_paginas: int = 0): 
         
         self.id: str = id
         self.chegada: int = chegada
@@ -29,9 +28,8 @@ class Processo:
         self.vruntime: float = 0.0      
         self.num_preempcoes: int = 0    
 
-        # Atributos de Estado de Memória (Bônus)
         self.page_faults: int = 0 
-        self.status_memoria: str = "pronto" # Novo estado: "bloqueado_mem"
+        self.status_memoria: str = "pronto" 
 
         self.tempo_termino: Optional[int] = None
         self.tempo_primeira_execucao: Optional[int] = None
