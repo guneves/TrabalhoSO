@@ -1,5 +1,3 @@
-# src/escalonadores/edf.py
-
 from typing import Optional
 
 from .base import EscalonadorBase
@@ -16,8 +14,8 @@ class EscalonadorEDF(EscalonadorBase):
 
     def proximo_processo(self) -> Optional[Processo]:
         """
-        Encontra, remove e retorna o processo com o menor (mais cedo)
-        deadline absoluto da fila de prontos.
+        Encontra, remove e retorna o processo com o menor deadline absoluto.
+        Critérios de Desempate: Menor Deadline, Processo ainda não iniciado, FIFO
 
         Returns:
             Optional[Processo]: O processo selecionado ou None se
@@ -26,7 +24,10 @@ class EscalonadorEDF(EscalonadorBase):
         if not self.fila_prontos:
             return None
 
-        processo_escolhido = min(self.fila_prontos, key=lambda p: p.deadline)
+        processo_escolhido = min( #!
+            self.fila_prontos, #!
+            key=lambda p: (p.deadline, 1 if p.tempo_primeira_execucao is not None else 0, p.chegada) #!
+        ) #!
         
         self.fila_prontos.remove(processo_escolhido)
         
@@ -44,4 +45,4 @@ class EscalonadorEDF(EscalonadorBase):
         Returns:
             bool: True se a preempção deve ocorrer, False caso contrário.
         """
-        return processo_novo.deadline < processo_atual.deadline
+        return processo_novo.deadline <= processo_atual.deadline #!
