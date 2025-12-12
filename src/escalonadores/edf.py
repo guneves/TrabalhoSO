@@ -24,10 +24,10 @@ class EscalonadorEDF(EscalonadorBase):
         if not self.fila_prontos:
             return None
 
-        processo_escolhido = min( #!
-            self.fila_prontos, #!
-            key=lambda p: (p.deadline, 1 if p.tempo_primeira_execucao is not None else 0, p.chegada) #!
-        ) #!
+        processo_escolhido = min( 
+            self.fila_prontos, 
+            key=lambda p: (p.deadline, 1 if p.tempo_primeira_execucao is not None else 0, p.chegada) 
+        ) 
         
         self.fila_prontos.remove(processo_escolhido)
         

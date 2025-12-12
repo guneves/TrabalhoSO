@@ -6,34 +6,34 @@ from ..processo import Processo
 class EscalonadorRoundRobin(EscalonadorBase):
     """
     Implementa o escalonador Round-Robin (RR).
-
-    Esta estratégia trata a fila de prontos como uma fila circular (FIFO).
-    Os processos são adicionados ao final da fila e o próximo a ser
-    executado é removido do início.
-
-    A lógica de preempção por 'quantum' é gerenciada pelo Simulador,
-    que então devolve o processo para esta fila usando 'adicionar_processo'.
     """
 
     def adicionar_processo(self, processo: Processo, tempo_atual: int):
         """
-        Adiciona um processo ao FINAL da fila de prontos.
-
-        Args:
-            processo (Processo): O processo que está entrando na fila
-                                (seja por chegada ou preempção).
-            tempo_atual (int): O tempo de simulação atual (não utilizado pelo RR).
+        Adiciona um processo ao FINAL da fila de prontos,
+        registrando o momento exato de entrada para desempate.
         """
+        processo._tick_entrada_fila = tempo_atual 
         self.fila_prontos.append(processo)
 
     def proximo_processo(self) -> Optional[Processo]:
         """
-        Remove e retorna o primeiro processo da fila (o mais antigo).
+        Remove e retorna o próximo processo. Desempate final: Quem tem o menor tick real.
 
         Returns:
-            Optional[Processo]: O próximo processo a ser executado,
-                                ou None se a fila estiver vazia.
+            Optional[Processo]: O próximo processo a ser executado.
         """
-        if self.fila_prontos:
-            return self.fila_prontos.pop(0)
-        return None
+        if not self.fila_prontos:
+            return None
+
+        processo_escolhido = min(
+            self.fila_prontos,
+            key=lambda p: (
+                getattr(p, '_tick_entrada_fila', 0) - (1 if p.tempo_primeira_execucao is None else 0),
+                1 if p.tempo_primeira_execucao is not None else 0,
+                getattr(p, '_tick_entrada_fila', 0)
+            )
+        )
+        
+        self.fila_prontos.remove(processo_escolhido)
+        return processo_escolhido
