@@ -1,69 +1,81 @@
-# TrabalhoSO
+# OS Scheduler Simulator
 
-# 🚀 Simulador de Escalonamento de SO
+# 🚀 Operating System Scheduler Simulator
 
-Este projeto é um simulador de algoritmos de escalonamento de processos (FIFO, SJF, RR, EDF, CFS) [cite: 8-14] desenvolvido para a disciplina de Sistemas Operacionais.
+This project is a process scheduling algorithm simulator (FIFO, SJF, RR, EDF, CFS) developed for the Operating Systems course.
 
-O objetivo é carregar processos a partir de um arquivo de entrada (JSON) , executar a simulação e gerar como saída um Gráfico de Gantt e métricas de desempenho[cite: 53, 54].
+The goal is to define processes via an interactive web interface, execute the simulation, and generate a Gantt chart and performance metrics. Additionally, it includes a virtual memory management simulation with page replacement policies (FIFO, LRU).
 
-## 🔧 Setup do Ambiente
+## 🔧 Environment Setup
 
-Siga estes passos para configurar seu ambiente de desenvolvimento local.
+Follow these steps to set up your local development environment.
 
-# 1. Clonar o Repositório\*\*
+### 1. Clone the Repository
 
-git clone [https://github.com/guneves/TrabalhoSO.git](https://github.com/guneves/TrabalhoSO.git)
-cd TrabalhoSO
+```bash
+git clone <repository-url>
+cd simulador_so
+```
 
-## Comando para macOS/Linux
+### 2. Create and Activate a Virtual Environment (venv)
 
+We recommend using `.venv` as the environment name so it's automatically ignored by `.gitignore`.
+
+#### macOS/Linux
+```bash
 python3 -m venv .venv
-
-## Ativar no macOS/Linux
-
 source .venv/bin/activate
+```
 
-### --- ou ---
-
-## Comando para Windows (PowerShell)
-
+#### Windows (PowerShell)
+```bash
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+```
 
-# 2. Criar e Ativar o Ambiente Virtual (venv)
+### 3. Install Dependencies
 
-Recomendamos usar o nome .venv para que o .gitignore o ignore automaticamente.
+With the virtual environment activated, install the required libraries:
 
-## Comando para macOS/Linux
-
-python3 -m venv .venv
-
-## Ativar no macOS/Linux
-
-source .venv/bin/activate
-
-### --- ou ---
-
-## Comando para Windows (PowerShell)
-
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-# 3. Instalar as Dependências
-
-Com o ambiente virtual ativado, instale as bibliotecas necessárias:
-
-Bash
-
+```bash
 pip install -r requirements.txt
-Pronto! Agora você pode executar o projeto.
+```
 
-# 🏃 Como Executar
+You're all set! Now you can run the project.
 
-O main.py é o ponto de entrada. Você deve especificar o algoritmo e o arquivo de entrada.
+# 🏃 How to Run
 
-Bash
+The project uses a **Streamlit web application** as its entry point, located at `web_app/app.py`.
 
-# Exemplo de execução
+To start the application, run:
 
-python main.py --algoritmo SJF --input casos/caso_base.json
+```bash
+streamlit run web_app/app.py
+```
+
+This will open a browser window with the simulator interface.
+
+## Features
+
+### Scheduling Algorithms
+- **FIFO**: First In, First Out
+- **SJF**: Shortest Job First
+- **RR**: Round Robin
+- **EDF**: Earliest Deadline First
+- **CFS**: Completely Fair Scheduler (simulated version)
+
+### Virtual Memory Management (Bonus)
+- Page fault handling
+- Page replacement policies: FIFO, LRU
+- RAM frame visualization
+- Inverted page table visualization
+- Disk swapping visualization
+
+### Metrics
+- Turnaround time
+- Waiting time
+- Deadline compliance
+- CPU utilization
+- Throughput
+- Number of context switches
+- Total page faults

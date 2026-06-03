@@ -118,7 +118,6 @@ class Simulador:
             "status_memoria": mem_status 
         }
 
-
     def _processar_chegadas(self):
         """
         Verifica se novos processos chegaram no tempo_atual.
