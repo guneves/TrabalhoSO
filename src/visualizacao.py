@@ -86,7 +86,7 @@ def gerar_gantt(
     ax.set_facecolor("#0f172a")
 
     if not eventos:
-        ax.text(0.5, 0.5, "Nenhum dado para exibir.", ha="center", va="center", color="#e2e8f0")
+        ax.text(0.5, 0.5, "No data to display.", ha="center", va="center", color="#e2e8f0")
         ax.axis("off")
         return fig
 
@@ -162,11 +162,11 @@ def gerar_gantt(
         )
 
     legend_handles = [
-        mpatches.Patch(color=CORES_MAP["execucao"], label="Executando"),
-        mpatches.Patch(color=CORES_MAP["esperando"], label="Fila pronta"),
-        mpatches.Patch(color=CORES_MAP["bloqueado_mem"], label="Bloqueado memoria"),
-        mpatches.Patch(color=CORES_MAP["sobrecarga"], label="Troca contexto"),
-        mpatches.Patch(color=CORES_MAP["ocioso"], label="CPU ociosa"),
+        mpatches.Patch(color=CORES_MAP["execucao"], label="Running"),
+        mpatches.Patch(color=CORES_MAP["esperando"], label="CPU queue"),
+        mpatches.Patch(color=CORES_MAP["bloqueado_mem"], label="Memory blocked"),
+        mpatches.Patch(color=CORES_MAP["sobrecarga"], label="Context switch"),
+        mpatches.Patch(color=CORES_MAP["ocioso"], label="CPU idle"),
         plt.Line2D([0], [0], color="#f97316", linestyle="dashed", lw=1.8, label="Deadline"),
     ]
     legenda = ax.legend(
@@ -180,10 +180,10 @@ def gerar_gantt(
     for texto in legenda.get_texts():
         texto.set_color("#e2e8f0")
 
-    ax.set_title(f"Linha do tempo - {algoritmo_nome}", fontsize=16, pad=16, color="#f8fafc", fontweight="bold")
+    ax.set_title(f"Timeline - {algoritmo_nome}", fontsize=16, pad=16, color="#f8fafc", fontweight="bold")
     ax.set_yticks(list(y_pos.values()))
     ax.set_yticklabels(list(y_pos.keys()), color="#e2e8f0", fontweight="bold")
-    ax.set_xlabel("Tempo (u.t.)", color="#cbd5e1", labelpad=10)
+    ax.set_xlabel("Time (t.u.)", color="#cbd5e1", labelpad=10)
     ax.set_xlim(0, max(1, max_time * 1.03))
     ax.grid(True, axis="x", linestyle="--", alpha=0.18, color="#94a3b8", zorder=0)
     ax.tick_params(axis="x", colors="#cbd5e1")
@@ -217,10 +217,10 @@ def gerar_visualizacao_memoria_ram(status_memoria: Dict[str, Any]):
         if ocupado:
             pid_hash = sum(ord(char) for char in str(pid))
             cor = plt.cm.get_cmap("tab20")(pid_hash % 20)
-            texto = f"Frame {frame['indice']}\nProcesso {pid}\nPagina {pagina}"
+            texto = f"Frame {frame['indice']}\nProcess {pid}\nPage {pagina}"
         else:
             cor = "#e5e7eb"
-            texto = f"Frame {frame['indice']}\nLivre"
+            texto = f"Frame {frame['indice']}\nFree"
 
         ax.add_patch(plt.Rectangle((col, y), 1, 1, color=cor, ec="#111827", lw=0.7))
         ax.text(col + 0.5, y + 0.5, texto, ha="center", va="center", fontsize=7, color="#ffffff", weight="bold")
@@ -244,10 +244,10 @@ def gerar_visualizacao_disco(status_memoria: Dict[str, Any] | None = None):
     ax.plot([0.85, 0.85], [0.82, 0.22], color="#111827", lw=1)
     ax.add_patch(mpatches.Ellipse((0.5, 0.22), 0.7, 0.18, color="#d1d5db", ec="#111827", lw=1))
 
-    texto = "Sem paginas removidas"
+    texto = "No evicted pages"
     if paginas:
         recentes = paginas[-6:]
-        texto = "\n".join(f"Processo {p['pid']} - Pagina {p['pagina']}" for p in recentes)
+        texto = "\n".join(f"Process {p['pid']} - Page {p['pagina']}" for p in recentes)
 
     ax.text(0.5, 0.52, texto, ha="center", va="center", fontsize=9, weight="bold")
     ax.set_xlim(0, 1)
@@ -259,15 +259,15 @@ def gerar_visualizacao_tabela_invertida(status_memoria: Dict[str, Any]):
     num_frames = status_memoria.get("num_frames", 0)
     tabela_dados = status_memoria.get("tabela_invertida", [])
     mapeamentos = {
-        item["frame"]: f"Processo {item['pid']} / Pagina {item['pagina']}"
+        item["frame"]: f"Process {item['pid']} / Page {item['pagina']}"
         for item in tabela_dados
     }
 
     cell_text = []
     cell_colors = []
     for frame in range(num_frames):
-        pid_page = mapeamentos.get(frame, "Livre")
-        valido = "V" if pid_page != "Livre" else "I"
+        pid_page = mapeamentos.get(frame, "Free")
+        valido = "V" if pid_page != "Free" else "I"
         cell_text.append([str(frame), pid_page, valido])
         cell_colors.append(["#eef2ff"] * 3 if valido == "V" else ["#ffffff"] * 3)
 
@@ -275,7 +275,7 @@ def gerar_visualizacao_tabela_invertida(status_memoria: Dict[str, Any]):
     ax.axis("off")
     tabela = ax.table(
         cellText=cell_text,
-        colLabels=["Frame", "Processo / Pagina", "Bit"],
+        colLabels=["Frame", "Process / Page", "Bit"],
         loc="center",
         cellLoc="center",
         colWidths=[0.25, 0.5, 0.25],

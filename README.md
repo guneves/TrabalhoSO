@@ -2,7 +2,7 @@
 
 An interactive Operating System simulator focused on CPU scheduling, process state transitions, virtual memory, page replacement, and real-time visualization.
 
-The project was built for an Operating Systems course. It lets users configure processes, choose a scheduling algorithm, enable paged virtual memory, run the simulation tick by tick, and inspect CPU, queue, RAM, swap, Gantt, and final performance metrics.
+The project was built for an Operating Systems course. It lets users configure processes, choose a scheduling algorithm, enable paged virtual memory, run the simulation tick by tick, and inspect CPU, queue, RAM, swap, a tick-based timeline, and final performance metrics.
 
 ## Main Features
 
@@ -58,7 +58,7 @@ The Streamlit interface shows the simulation as it runs:
 - ready queue;
 - processes blocked by memory;
 - process table with runtime state;
-- Gantt chart;
+- tick-based CPU/process timeline;
 - current memory access;
 - processes resident in RAM;
 - RAM frame grid;
@@ -131,7 +131,7 @@ The final result panel includes global and per-process metrics.
 - `src/simulador.py`: discrete-event simulation engine. It controls arrivals, CPU dispatching, preemption, context switching, page fault blocking, snapshots, and final metrics.
 - `src/memoria.py`: virtual memory manager. It manages RAM frames, page hits, page faults, FIFO/LRU replacement, swap, and memory visualization data.
 - `src/metricas.py`: builds final process tables and global metric summaries.
-- `src/visualizacao.py`: generates Matplotlib visualizations such as the Gantt chart and memory plots.
+- `src/visualizacao.py`: contains optional Matplotlib plotting helpers kept for standalone visual checks.
 - `src/escalonadores/`: contains scheduling algorithm implementations.
 - `web_app/app.py`: Streamlit application and user interface.
 
@@ -201,7 +201,7 @@ http://localhost:8501
    - set priority;
    - set number of pages.
 6. Click **Run simulation**.
-7. Observe the CPU, queue, memory, swap, Gantt chart, and final metrics.
+7. Observe the CPU, queue, memory, swap, tick timeline, and final metrics.
 
 ## Notes About the Memory Model
 

@@ -265,6 +265,7 @@ class Simulador:
             "desbloqueio_em": self.tempo_atual + max(1, self.custo_disco),
             "pagina": processo.ultima_pagina_requisitada,
         })
+        self._logar_gantt_evento("CPU", "page_fault")
         self._logar_gantt_evento(processo.id, "bloqueado_mem")
         processo.tempo_bloqueado_memoria += 1
         self.metricas_globais["tempo_total_bloqueio_mem"] += 1

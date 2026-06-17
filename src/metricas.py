@@ -7,7 +7,7 @@ from .processo import Processo
 
 def gerar_dataframe_metricas(processos_terminados: List[Processo]) -> pd.DataFrame:
     """
-    Gera um DataFrame com as metricas individuais por processo.
+    Builds a DataFrame with per-process metrics.
     """
     if not processos_terminados:
         return pd.DataFrame()
@@ -18,20 +18,20 @@ def gerar_dataframe_metricas(processos_terminados: List[Processo]) -> pd.DataFra
     for processo in processos_ordenados:
         dados_metricas.append({
             "ID": processo.id,
-            "Chegada": processo.chegada,
-            "Execucao": processo.execucao,
+            "Arrival": processo.chegada,
+            "CPU time": processo.execucao,
             "Deadline": processo.deadline_relativo,
-            "Deadline Real": processo.deadline,
-            "Prioridade": processo.prioridade,
-            "Inicio": processo.tempo_primeira_execucao if processo.tempo_primeira_execucao is not None else -1,
-            "Termino": processo.tempo_termino if processo.tempo_termino is not None else -1,
+            "Absolute deadline": processo.deadline,
+            "Priority": processo.prioridade,
+            "Start": processo.tempo_primeira_execucao if processo.tempo_primeira_execucao is not None else -1,
+            "Finish": processo.tempo_termino if processo.tempo_termino is not None else -1,
             "Turnaround": processo.turnaround if processo.turnaround is not None else 0,
-            "Espera fila": processo.tempo_espera if processo.tempo_espera is not None else 0,
-            "Bloq. memoria": getattr(processo, "tempo_bloqueado_memoria", 0),
-            "Nao executando": processo.tempo_total_nao_executando if processo.tempo_total_nao_executando is not None else 0,
+            "CPU queue wait": processo.tempo_espera if processo.tempo_espera is not None else 0,
+            "Memory block time": getattr(processo, "tempo_bloqueado_memoria", 0),
+            "Off-CPU time": processo.tempo_total_nao_executando if processo.tempo_total_nao_executando is not None else 0,
             "Page Hits": getattr(processo, "page_hits", 0),
             "Page Faults": getattr(processo, "page_faults", 0),
-            "Deadline OK": "Sim" if processo.deadline_ok else "Nao",
+            "Deadline met": "Yes" if processo.deadline_ok else "No",
         })
 
     return pd.DataFrame(dados_metricas)
@@ -42,7 +42,7 @@ def gerar_dict_resumo(
     processos_terminados: List[Processo],
 ) -> Dict[str, Any]:
     """
-    Gera um dicionario com as metricas globais do simulador.
+    Builds a dictionary with global simulator metrics.
     """
     tempo_total = metricas_globais.get("tempo_total_simulacao", 0)
     tempo_ocioso = metricas_globais.get("tempo_total_ocioso", 0)
@@ -72,16 +72,16 @@ def gerar_dict_resumo(
         media_espera = soma_espera / num_processos
 
     return {
-        "Tempo total": f"{tempo_total:.2f} u.t.",
-        "Tempo ocioso da CPU": f"{tempo_ocioso:.2f} u.t.",
-        "Tempo em sobrecarga": f"{tempo_sobrecarga:.2f} u.t.",
-        "Bloqueio memoria acumulado": f"{tempo_bloqueio_mem:.2f} u.t.",
-        "Ticks com page fault": f"{tempo_page_fault_cpu:.2f} u.t.",
-        "Trocas de contexto": total_trocas_contexto,
-        "Preempcoes": total_preempcoes,
-        "Throughput": f"{throughput:.4f} processos/u.t.",
-        "Uso da CPU": f"{uso_cpu:.2f}%",
-        "Ociosidade da CPU": f"{percent_ociosidade:.2f}%",
-        "Turnaround medio": f"{media_turnaround:.2f} u.t.",
-        "Espera media na fila": f"{media_espera:.2f} u.t.",
+        "Total time": f"{tempo_total:.2f} t.u.",
+        "CPU idle time": f"{tempo_ocioso:.2f} t.u.",
+        "Total overhead": f"{tempo_sobrecarga:.2f} t.u.",
+        "Memory block time": f"{tempo_bloqueio_mem:.2f} t.u.",
+        "Page Fault ticks": f"{tempo_page_fault_cpu:.2f} t.u.",
+        "Context switches": total_trocas_contexto,
+        "Preemptions": total_preempcoes,
+        "Throughput": f"{throughput:.4f} processes/t.u.",
+        "CPU usage": f"{uso_cpu:.2f}%",
+        "CPU idle rate": f"{percent_ociosidade:.2f}%",
+        "Average turnaround": f"{media_turnaround:.2f} t.u.",
+        "Average CPU queue wait": f"{media_espera:.2f} t.u.",
     }
