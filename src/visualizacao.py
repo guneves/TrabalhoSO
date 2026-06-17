@@ -1,281 +1,287 @@
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+from collections import defaultdict
 from typing import List, Dict, Any
 import math
-from collections import defaultdict
+
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 
 from .processo import Processo
 
+
 CORES_MAP = {
-    'execucao': 'green',     
-    'sobrecarga': 'red',       
-    'estouro': 'gray',       
-    'ocioso': 'whitesmoke',   
-    'bloqueado_mem': 'blue', 
-    'esperando': '#FFBF00' 
+    "execucao": "#22c55e",
+    "executando": "#22c55e",
+    "sobrecarga": "#ef4444",
+    "ocioso": "#64748b",
+    "bloqueado_mem": "#3b82f6",
+    "esperando": "#f59e0b",
 }
 
-FRAMES_POR_LINHA = 8 
-NUM_FRAMES = 50 
+GANTT_STATUS_STYLE = {
+    "esperando": {"height": 0.18, "offset": 0.24, "alpha": 0.82, "zorder": 3},
+    "bloqueado_mem": {"height": 0.18, "offset": -0.24, "alpha": 0.88, "zorder": 3},
+    "execucao": {"height": 0.48, "offset": 0.0, "alpha": 1.0, "zorder": 4},
+    "sobrecarga": {"height": 0.48, "offset": 0.0, "alpha": 1.0, "zorder": 4},
+    "ocioso": {"height": 0.48, "offset": 0.0, "alpha": 0.72, "zorder": 4},
+}
+
+FRAMES_POR_LINHA = 8
+
+
+def _ordenar_pid(pid: str):
+    if pid.startswith("P") and pid[1:].isdigit():
+        return int(pid[1:])
+    if pid == "CPU":
+        return 10_000
+    return pid
 
 
 def _converter_log_ticks_para_eventos(log_ticks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Converte o log de ticks em eventos (barras do gráfico),
-    agrupando processamento por ID para suportar eventos simultâneos
-    (ex: P1 executando enquanto P2 espera).
-    """
     if not log_ticks:
         return []
 
     timeline_por_id = defaultdict(list)
     for tick_info in log_ticks:
-        id_proc = tick_info['id']
-        timeline_por_id[id_proc].append((tick_info['tick'], tick_info['status']))
+        tipo = "execucao" if tick_info["status"] == "executando" else tick_info["status"]
+        timeline_por_id[tick_info["id"]].append((tick_info["tick"], tipo))
 
-    eventos_finais = []
-
+    eventos = []
     for id_proc, timeline in timeline_por_id.items():
-        if not timeline:
-            continue
-            
-        timeline.sort(key=lambda x: x[0])
-        
-        tick_inicial, status_atual = timeline[0]
-        tick_anterior = tick_inicial
-        
-        tipo_atual = status_atual
-        if status_atual == 'executando': tipo_atual = 'execucao'
-        elif status_atual == 'bloqueado_mem': tipo_atual = 'bloqueado_mem'
-        
-        inicio_evento = tick_inicial
+        timeline.sort(key=lambda item: item[0])
+        inicio, tipo_atual = timeline[0]
+        tick_anterior = inicio
 
-        for tick, status in timeline[1:]:
-            tipo_novo = status
-            if status == 'executando': tipo_novo = 'execucao'
-            elif status == 'bloqueado_mem': tipo_novo = 'bloqueado_mem'
-            
-            if tipo_novo != tipo_atual or tick != (tick_anterior + 1):
-                eventos_finais.append({
-                    'id': id_proc,
-                    'tipo': tipo_atual,
-                    'inicio': inicio_evento,
-                    'fim': tick_anterior + 1 
+        for tick, tipo in timeline[1:]:
+            if tipo != tipo_atual or tick != tick_anterior + 1:
+                eventos.append({
+                    "id": id_proc,
+                    "tipo": tipo_atual,
+                    "inicio": inicio,
+                    "fim": tick_anterior + 1,
                 })
-                
-                tipo_atual = tipo_novo
-                inicio_evento = tick
-            
+                inicio = tick
+                tipo_atual = tipo
             tick_anterior = tick
 
-        eventos_finais.append({
-            'id': id_proc,
-            'tipo': tipo_atual,
-            'inicio': inicio_evento,
-            'fim': tick_anterior + 1
+        eventos.append({
+            "id": id_proc,
+            "tipo": tipo_atual,
+            "inicio": inicio,
+            "fim": tick_anterior + 1,
         })
 
-    return eventos_finais
+    return eventos
 
 
-def gerar_gantt(log_ticks: List[Dict[str, Any]], 
-                 processos_terminados: List[Processo], 
-                 caminho_saida: str,  
-                 algoritmo_nome: str):
-    """
-    Gera um gráfico de Gantt e RETORNA o objeto 'figura' do Matplotlib.
-    """
-    
-    eventos_agrupados = _converter_log_ticks_para_eventos(log_ticks)
-    if not eventos_agrupados:
-        print("Aviso: Nenhum evento para plotar no gráfico de Gantt.")
-        fig, ax = plt.subplots()
-        ax.text(0.5, 0.5, 'Nenhum dado para exibir.', horizontalalignment='center', verticalalignment='center')
+def gerar_gantt(
+    log_ticks: List[Dict[str, Any]],
+    processos_terminados: List[Processo],
+    caminho_saida: str,
+    algoritmo_nome: str,
+):
+    eventos = _converter_log_ticks_para_eventos(log_ticks)
+    fig_height = 2.4 + max(1, len({e["id"] for e in eventos})) * 0.62
+    fig, ax = plt.subplots(figsize=(16, fig_height), constrained_layout=False)
+    fig.patch.set_facecolor("#090d18")
+    ax.set_facecolor("#0f172a")
+
+    if not eventos:
+        ax.text(0.5, 0.5, "Nenhum dado para exibir.", ha="center", va="center", color="#e2e8f0")
+        ax.axis("off")
         return fig
 
-    fig, ax = plt.subplots(figsize=(15, 8))
+    ids = sorted({p.id for p in processos_terminados} | {e["id"] for e in eventos}, key=_ordenar_pid)
+    y_pos = {pid: idx for idx, pid in enumerate(ids)}
 
-    ids_processos = sorted(list(set(p.id for p in processos_terminados)), reverse=True)
-    y_pos = {id_proc: i for i, id_proc in enumerate(ids_processos)}
-    
-    if any(e['id'] == 'CPU' for e in eventos_agrupados):
-        y_pos['CPU'] = len(ids_processos)
-        ids_processos.append('CPU')
+    max_time = max(evento["fim"] for evento in eventos)
+    limite_x = max(1, max_time)
 
-    processos_map = {p.id: p for p in processos_terminados}
+    for idx, pid in enumerate(ids):
+        ax.barh(
+            y=idx,
+            width=limite_x,
+            left=0,
+            height=0.78,
+            color="#111827" if idx % 2 == 0 else "#0b1220",
+            edgecolor="#253044",
+            linewidth=0.6,
+            zorder=1,
+        )
 
-    max_time = 0
-    for evento in eventos_agrupados:
-        id_proc = evento['id']
-        inicio = evento['inicio']
-        fim = evento['fim']
-        tipo = evento['tipo']
-        
-        if fim > max_time:
-            max_time = fim
-            
+    eventos_ordenados = sorted(
+        eventos,
+        key=lambda item: {"esperando": 0, "bloqueado_mem": 1, "ocioso": 2, "sobrecarga": 3, "execucao": 4}.get(item["tipo"], 0),
+    )
+
+    for evento in eventos_ordenados:
+        inicio = evento["inicio"]
+        fim = evento["fim"]
         duracao = fim - inicio
         if duracao <= 0:
             continue
-            
-        if id_proc in y_pos:
-            pos_y_atual = y_pos[id_proc]
-            cor = CORES_MAP.get(tipo, 'black') 
 
-            if tipo == 'execucao' and \
-               id_proc in processos_map and \
-               processos_map[id_proc].deadline_ok is False:
-                pass 
+        tipo = evento["tipo"]
+        estilo = GANTT_STATUS_STYLE.get(tipo, {"height": 0.42, "offset": 0.0, "alpha": 1.0, "zorder": 4})
+        if evento["id"] == "CPU":
+            estilo = {**estilo, "height": 0.50, "offset": 0.0}
 
-            ax.barh(y=pos_y_atual, width=duracao, left=inicio, height=0.7,
-                    color=cor, edgecolor='black', linewidth=0.5)
+        ax.barh(
+            y=y_pos[evento["id"]] + estilo["offset"],
+            width=duracao,
+            left=inicio,
+            height=estilo["height"],
+            color=CORES_MAP.get(tipo, "#e2e8f0"),
+            edgecolor="#020617",
+            linewidth=0.5,
+            alpha=estilo["alpha"],
+            zorder=estilo["zorder"],
+        )
 
-    for proc in processos_terminados:
-        if proc.deadline is not None and proc.id in y_pos:
-            deadline = proc.deadline
-            pos_y_deadline = y_pos[proc.id]
-            
-            ax.vlines(x=deadline, ymin=pos_y_deadline - 0.4, ymax=pos_y_deadline + 0.4, 
-                      colors='red', linestyles='dashed', lw=2,
-                      label='Deadline' if 'deadline' not in ax.get_legend_handles_labels()[1] else "")
+    for processo in processos_terminados:
+        if processo.deadline is None or processo.id not in y_pos:
+            continue
+        ax.vlines(
+            x=processo.deadline,
+            ymin=y_pos[processo.id] - 0.42,
+            ymax=y_pos[processo.id] + 0.42,
+            colors="#f97316",
+            linestyles="dashed",
+            lw=1.8,
+            zorder=5,
+        )
+        ax.text(
+            processo.deadline,
+            y_pos[processo.id] - 0.47,
+            "D",
+            color="#fed7aa",
+            fontsize=8,
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+            zorder=6,
+        )
 
-    legend_patches = [
-        mpatches.Patch(color=CORES_MAP['execucao'], label='Execução'),
-        mpatches.Patch(color=CORES_MAP['sobrecarga'], label='Sobrecarga'),
-        mpatches.Patch(color=CORES_MAP['ocioso'], label='CPU Ociosa', edgecolor='gray'),
-        mpatches.Patch(color=CORES_MAP['bloqueado_mem'], label='Bloqueio (Page Fault)'), 
-        mpatches.Patch(color=CORES_MAP['esperando'], label='Em espera', edgecolor="#ff9900"),
-    ]
     legend_handles = [
-        *legend_patches,
-        plt.Line2D([0], [0], color='red', linestyle='dashed', lw=2, label='Deadline')
+        mpatches.Patch(color=CORES_MAP["execucao"], label="Executando"),
+        mpatches.Patch(color=CORES_MAP["esperando"], label="Fila pronta"),
+        mpatches.Patch(color=CORES_MAP["bloqueado_mem"], label="Bloqueado memoria"),
+        mpatches.Patch(color=CORES_MAP["sobrecarga"], label="Troca contexto"),
+        mpatches.Patch(color=CORES_MAP["ocioso"], label="CPU ociosa"),
+        plt.Line2D([0], [0], color="#f97316", linestyle="dashed", lw=1.8, label="Deadline"),
     ]
-    ax.legend(handles=legend_handles, loc='upper right', fontsize='small')
+    legenda = ax.legend(
+        handles=legend_handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.16),
+        ncol=6,
+        fontsize=9,
+        frameon=False,
+    )
+    for texto in legenda.get_texts():
+        texto.set_color("#e2e8f0")
 
-    ax.set_title(f"Gráfico de Gantt - Algoritmo: {algoritmo_nome}", fontsize=16)
-    
-    ax.set_yticks(ticks=list(y_pos.values()))
-    ax.set_yticklabels(labels=list(y_pos.keys()))
-    ax.set_ylabel("Processos", fontsize=12)
-    
-    ax.set_xlabel("Tempo (unidade de tempo)", fontsize=12)
-    ax.set_xlim(0, max_time * 1.05)
-    ax.grid(True, axis='x', linestyle='--', alpha=0.7)
-    
-    ax.invert_yaxis() 
-    plt.tight_layout()
-
+    ax.set_title(f"Linha do tempo - {algoritmo_nome}", fontsize=16, pad=16, color="#f8fafc", fontweight="bold")
+    ax.set_yticks(list(y_pos.values()))
+    ax.set_yticklabels(list(y_pos.keys()), color="#e2e8f0", fontweight="bold")
+    ax.set_xlabel("Tempo (u.t.)", color="#cbd5e1", labelpad=10)
+    ax.set_xlim(0, max(1, max_time * 1.03))
+    ax.grid(True, axis="x", linestyle="--", alpha=0.18, color="#94a3b8", zorder=0)
+    ax.tick_params(axis="x", colors="#cbd5e1")
+    ax.tick_params(axis="y", colors="#e2e8f0", length=0)
+    ax.spines[["top", "right", "left"]].set_visible(False)
+    ax.spines["bottom"].set_color("#475569")
+    ax.margins(y=0.08)
+    ax.invert_yaxis()
+    fig.subplots_adjust(left=0.06, right=0.985, top=0.86, bottom=0.22)
     return fig
+
 
 def gerar_visualizacao_memoria_ram(status_memoria: Dict[str, Any]):
-    """
-    Gera uma representação visual do estado da RAM (Matriz de Frames).
-    """
-    fig, ax = plt.subplots(figsize=(8, 7))
-    ax.set_title(f"Memória RAM ({NUM_FRAMES} Frames)")
-    ax.axis('off')
-
-    frames_data = status_memoria['frames_ram']
-    
-    rows = math.ceil(NUM_FRAMES / FRAMES_POR_LINHA)
+    frames = status_memoria.get("frames_ram", [])
+    num_frames = status_memoria.get("num_frames", len(frames))
+    rows = max(1, math.ceil(max(1, num_frames) / FRAMES_POR_LINHA))
     cols = FRAMES_POR_LINHA
-    
-    for i, frame in enumerate(frames_data):
+
+    fig, ax = plt.subplots(figsize=(8, max(3, rows * 0.9)))
+    ax.set_title(f"RAM ({num_frames} frames)")
+    ax.axis("off")
+
+    for i, frame in enumerate(frames):
         row = i // cols
         col = i % cols
-        
-        rect = plt.Rectangle((col, rows - 1 - row), 1, 1, 
-                             fill=True, 
-                             edgecolor='black', 
-                             linewidth=1)
-                             
-        if frame['ocupado']:
-            pid_hash = sum(ord(c) for c in frame['processo_id'])
-            cor = plt.cm.get_cmap('tab10')(pid_hash % 10)
-            rect.set_color(cor)
-            
-            text = f"F{frame['indice']}\n{frame['processo_id']}:p{frame['pagina_num']}"
-            ax.text(col + 0.5, rows - 1 - row + 0.5, text, 
-                    ha='center', va='center', fontsize=8, color='black', weight='bold')
-        else:
-            rect.set_color('lightgray')
-            ax.text(col + 0.5, rows - 1 - row + 0.5, f"F{frame['indice']}\nLivre", 
-                    ha='center', va='center', fontsize=8, color='darkgray')
+        y = rows - 1 - row
+        ocupado = frame.get("ocupado")
+        pid = frame.get("processo_id")
+        pagina = frame.get("pagina_num")
 
-        ax.add_patch(rect)
-        
+        if ocupado:
+            pid_hash = sum(ord(char) for char in str(pid))
+            cor = plt.cm.get_cmap("tab20")(pid_hash % 20)
+            texto = f"Frame {frame['indice']}\nProcesso {pid}\nPagina {pagina}"
+        else:
+            cor = "#e5e7eb"
+            texto = f"Frame {frame['indice']}\nLivre"
+
+        ax.add_patch(plt.Rectangle((col, y), 1, 1, color=cor, ec="#111827", lw=0.7))
+        ax.text(col + 0.5, y + 0.5, texto, ha="center", va="center", fontsize=7, color="#ffffff", weight="bold")
+
     ax.set_xlim(0, cols)
     ax.set_ylim(0, rows)
-    ax.set_aspect('equal', adjustable='box')
-    
+    ax.set_aspect("equal", adjustable="box")
     return fig
 
-def gerar_visualizacao_disco():
-    """
-    Gera uma representação simbólica do Disco.
-    """
+
+def gerar_visualizacao_disco(status_memoria: Dict[str, Any] | None = None):
+    status_memoria = status_memoria or {}
+    paginas = status_memoria.get("paginas_disco", []) or status_memoria.get("historico_swap", [])
+
     fig, ax = plt.subplots(figsize=(4, 5))
-    ax.set_title("Disco Rígido (Swapping)")
-    ax.axis('off')
-    
-    disk_color = '#e0e0e0'
-    ax.add_patch(mpatches.Ellipse((0.5, 0.8), 0.7, 0.2, color=disk_color, edgecolor='black', linewidth=1))
-    # Lateral do cilindro
-    ax.plot([0.15, 0.15], [0.8, 0.2], color='black', linewidth=1)
-    ax.plot([0.85, 0.85], [0.8, 0.2], color='black', linewidth=1)
-    # Frente do cilindro
-    ax.add_patch(mpatches.Ellipse((0.5, 0.2), 0.7, 0.2, color=disk_color, edgecolor='black', linewidth=1))
-    
-    ax.text(0.5, 0.5, "Páginas\nSwap", ha='center', va='center', fontsize=12, color='darkred', weight='bold')
-    
+    ax.set_title("Swap")
+    ax.axis("off")
+
+    ax.add_patch(mpatches.Ellipse((0.5, 0.82), 0.7, 0.18, color="#e5e7eb", ec="#111827", lw=1))
+    ax.plot([0.15, 0.15], [0.82, 0.22], color="#111827", lw=1)
+    ax.plot([0.85, 0.85], [0.82, 0.22], color="#111827", lw=1)
+    ax.add_patch(mpatches.Ellipse((0.5, 0.22), 0.7, 0.18, color="#d1d5db", ec="#111827", lw=1))
+
+    texto = "Sem paginas removidas"
+    if paginas:
+        recentes = paginas[-6:]
+        texto = "\n".join(f"Processo {p['pid']} - Pagina {p['pagina']}" for p in recentes)
+
+    ax.text(0.5, 0.52, texto, ha="center", va="center", fontsize=9, weight="bold")
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    
     return fig
 
 
 def gerar_visualizacao_tabela_invertida(status_memoria: Dict[str, Any]):
-    """
-    Gera uma representação visual da Tabela de Páginas Invertida.
-    """
-    fig, ax = plt.subplots(figsize=(4, 8))
-    ax.axis('off')
+    num_frames = status_memoria.get("num_frames", 0)
+    tabela_dados = status_memoria.get("tabela_invertida", [])
+    mapeamentos = {
+        item["frame"]: f"Processo {item['pid']} / Pagina {item['pagina']}"
+        for item in tabela_dados
+    }
 
-    tabela_dados = status_memoria['tabela_invertida']
-    
-    headers = ["Frame", "PID:Página", "Valid/Inv"]
     cell_text = []
-    
-    mapeamentos = {}
-    for item in tabela_dados:
-        mapeamentos[item['frame']] = f"{item['pid']}:p{item['pagina']}" 
-    
-    all_frames = []
-    for i in range(NUM_FRAMES):
-        pid_page = mapeamentos.get(i, "Livre")
-        bit = 'V' if pid_page != "Livre" else 'I'
-        all_frames.append([str(i), pid_page, bit])
+    cell_colors = []
+    for frame in range(num_frames):
+        pid_page = mapeamentos.get(frame, "Livre")
+        valido = "V" if pid_page != "Livre" else "I"
+        cell_text.append([str(frame), pid_page, valido])
+        cell_colors.append(["#eef2ff"] * 3 if valido == "V" else ["#ffffff"] * 3)
 
-    frames_a_exibir = 50
-    cell_text_exibir = all_frames[:frames_a_exibir]
-    
-    if NUM_FRAMES > frames_a_exibir:
-        cell_text_exibir.append(["...", "...", "..."])
-        cell_colors = [['w'] * 3] * frames_a_exibir + [['lightgray'] * 3]
-    else:
-        cell_colors = [['w'] * 3] * frames_a_exibir
-        
-    for i, row in enumerate(cell_text_exibir):
-        if row[2] == 'V':
-            cell_colors[i] = ['#e6e6ff'] * 3
-            
-    tabela = ax.table(cellText=cell_text_exibir, colLabels=headers, 
-                      loc='center', cellLoc='center', 
-                      colWidths=[0.3, 0.4, 0.3],
-                      cellColours=cell_colors)
-
+    fig, ax = plt.subplots(figsize=(4.8, max(4, num_frames * 0.25)))
+    ax.axis("off")
+    tabela = ax.table(
+        cellText=cell_text,
+        colLabels=["Frame", "Processo / Pagina", "Bit"],
+        loc="center",
+        cellLoc="center",
+        colWidths=[0.25, 0.5, 0.25],
+        cellColours=cell_colors,
+    )
     tabela.auto_set_font_size(False)
-    tabela.set_fontsize(10)
-    tabela.scale(1, 1.2)
-    
+    tabela.set_fontsize(9)
+    tabela.scale(1, 1.15)
     return fig

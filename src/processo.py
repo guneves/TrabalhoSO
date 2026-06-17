@@ -28,14 +28,19 @@ class Processo:
         self.vruntime: float = 0.0      
         self.num_preempcoes: int = 0    
 
-        self.page_faults: int = 0 
-        self.status_memoria: str = "pronto" 
+        self.page_faults: int = 0
+        self.page_hits: int = 0
+        self.ultima_pagina_requisitada: Optional[int] = None
+        self.status_memoria: str = "pronto"
+        self.tempo_esperando_pronto: int = 0
+        self.tempo_bloqueado_memoria: int = 0
 
         self.tempo_termino: Optional[int] = None
         self.tempo_primeira_execucao: Optional[int] = None
         
         self.turnaround: Optional[int] = None
         self.tempo_espera: Optional[int] = None
+        self.tempo_total_nao_executando: Optional[int] = None
         self.deadline_ok: Optional[bool] = None
 
     def calcular_metricas_finais(self, custo_sobrecarga: int = 0) -> None:
@@ -48,9 +53,8 @@ class Processo:
 
         self.turnaround = self.tempo_termino - self.chegada
 
-        sobrecarga_total = self.num_preempcoes * custo_sobrecarga
-        
-        self.tempo_espera = (self.turnaround + 1) - self.execucao - sobrecarga_total
+        self.tempo_total_nao_executando = max(0, self.turnaround - self.execucao)
+        self.tempo_espera = self.tempo_esperando_pronto
         
         self.deadline_ok = self.tempo_termino <= self.deadline
 

@@ -49,4 +49,4 @@ class EscalonadorEDF(EscalonadorBase):
         Returns:
             bool: True se a preempção deve ocorrer, False caso contrário.
         """
-        return processo_novo.deadline <= processo_atual.deadline #!
+        return processo_novo.deadline < processo_atual.deadline
